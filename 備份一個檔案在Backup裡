@@ -1,4 +1,0 @@
-BACKUP DATABASE TRPG_Corpus_DB
-TO DISK = 'D:\TRPG_Corpus_SQLServer\Backup\TRPG_Corpus_DB_before_revision.bak'
-WITH INIT;
-GO
