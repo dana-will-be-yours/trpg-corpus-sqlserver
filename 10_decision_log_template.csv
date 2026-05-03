@@ -1,2 +1,0 @@
-﻿team_code,session_no,scene_no,decision_title,decision_text,decision_reason,decision_owner_person_code,source_turn_no,decision_type,alternative_options,consensus_level,decision_status,traceability_score
-T01_TRPG_DB,1,1,先確認退路,PC 決定先確認港口退路，再深入調查鐘聲來源,降低風險，建立後續行動安全性,PL001,2,plot,方案A：先找退路；方案B：直接前往鐘樓,6,accepted,7
