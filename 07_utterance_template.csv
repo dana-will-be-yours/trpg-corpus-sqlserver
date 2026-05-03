@@ -1,2 +1,0 @@
-﻿team_code,session_no,scene_no,turn_no,speaker_type,speaker_person_code,speaker_pc_code,speaker_npc_code,start_timecode,end_timecode,utterance_text,utterance_function,is_in_character,speaker_label,raw_transcript_line,cleaned_text,language_code,is_gm_narration,is_rule_discussion,is_decision_related,is_conflict_related,source_file
-T01_TRPG_DB,1,1,1,GM,GM001,,,00:00:01,00:00:15,夜色壓上海面，沉鐘港的鐘樓半截沒入水中。,narration,0,GM,夜色壓上海面，沉鐘港的鐘樓半截沒入水中。,夜色壓上海面，沉鐘港的鐘樓半截沒入水中。,zh-TW,1,0,0,0,G01-S01_transcript.csv
