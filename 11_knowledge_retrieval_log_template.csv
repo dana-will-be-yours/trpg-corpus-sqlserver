@@ -1,2 +1,0 @@
-﻿team_code,session_no,requester_person_code,query_text,target_type,retrieval_result_count,retrieval_success,retrieval_seconds,query_mode,retrieved_table,retrieved_primary_key,used_in_output,tms_process_label
-T01_TRPG_DB,1,PL001,查詢沉鐘港設定,world,1,1,12,world,World_Setting,1,1,retrieval
