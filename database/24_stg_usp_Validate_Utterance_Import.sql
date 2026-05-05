@@ -111,6 +111,32 @@ BEGIN
         FROM stg.Utterance_Import AS ui
         WHERE ui.import_batch_id = @import_batch_id
     ),
+    TurnDuplicates AS
+    (
+        SELECT
+            b.import_batch_id,
+            b.session_code_trim,
+            b.turn_no_value,
+            COUNT_BIG(*) AS batch_turn_dup_count
+        FROM Base AS b
+        GROUP BY
+            b.import_batch_id,
+            b.session_code_trim,
+            b.turn_no_value
+    ),
+    CodeDuplicates AS
+    (
+        SELECT
+            b.import_batch_id,
+            b.session_code_trim,
+            b.effective_utterance_code,
+            COUNT_BIG(*) AS batch_code_dup_count
+        FROM Base AS b
+        GROUP BY
+            b.import_batch_id,
+            b.session_code_trim,
+            b.effective_utterance_code
+    ),
     Mapped AS
     (
         SELECT
@@ -133,17 +159,23 @@ BEGIN
             ws.world_setting_id AS related_world_setting_id,
             it.item_id AS related_item_id,
 
-            COUNT(*) OVER (
-                PARTITION BY b.import_batch_id, b.session_code_trim, b.turn_no_value
-            ) AS batch_turn_dup_count,
-
-            COUNT(*) OVER (
-                PARTITION BY b.import_batch_id, b.session_code_trim, b.effective_utterance_code
-            ) AS batch_code_dup_count,
+            td.batch_turn_dup_count,
+            cd.batch_code_dup_count,
 
             u_turn.utterance_id AS existing_turn_utterance_id,
             u_code.utterance_id AS existing_code_utterance_id
         FROM Base AS b
+        LEFT JOIN TurnDuplicates AS td
+            ON td.import_batch_id = b.import_batch_id
+           AND td.session_code_trim = b.session_code_trim
+           AND (
+                td.turn_no_value = b.turn_no_value
+                OR (td.turn_no_value IS NULL AND b.turn_no_value IS NULL)
+           )
+        LEFT JOIN CodeDuplicates AS cd
+            ON cd.import_batch_id = b.import_batch_id
+           AND cd.session_code_trim = b.session_code_trim
+           AND cd.effective_utterance_code = b.effective_utterance_code
         LEFT JOIN dbo.Research_Project AS rp
             ON rp.project_code = b.project_code_trim
         LEFT JOIN dbo.Team AS t
