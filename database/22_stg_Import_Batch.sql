@@ -1,6 +1,21 @@
+USE TRPG_Corpus_DB;
+GO
+
+SET ANSI_NULLS ON;
+GO
+
+SET QUOTED_IDENTIFIER ON;
+GO
+
+IF SCHEMA_ID(N'stg') IS NULL
+BEGIN
+    EXEC(N'CREATE SCHEMA [stg] AUTHORIZATION [dbo];');
+END;
+GO
+
 IF OBJECT_ID(N'stg.Import_Batch', N'U') IS NULL
 BEGIN
-    CREATE TABLE stg.Import_Batch
+    CREATE TABLE [stg].[Import_Batch]
     (
         import_batch_id BIGINT IDENTITY(1,1) NOT NULL
             CONSTRAINT PK_stg_Import_Batch PRIMARY KEY,
@@ -87,34 +102,19 @@ BEGIN
             )),
 
         CONSTRAINT CK_stg_Import_Batch_Row_Count
-            CHECK (
-                total_row_count IS NULL
-                OR total_row_count >= 0
-            ),
+            CHECK (total_row_count IS NULL OR total_row_count >= 0),
 
         CONSTRAINT CK_stg_Import_Batch_Valid_Row_Count
-            CHECK (
-                valid_row_count IS NULL
-                OR valid_row_count >= 0
-            ),
+            CHECK (valid_row_count IS NULL OR valid_row_count >= 0),
 
         CONSTRAINT CK_stg_Import_Batch_Invalid_Row_Count
-            CHECK (
-                invalid_row_count IS NULL
-                OR invalid_row_count >= 0
-            ),
+            CHECK (invalid_row_count IS NULL OR invalid_row_count >= 0),
 
         CONSTRAINT CK_stg_Import_Batch_Warning_Count
-            CHECK (
-                warning_count IS NULL
-                OR warning_count >= 0
-            ),
+            CHECK (warning_count IS NULL OR warning_count >= 0),
 
         CONSTRAINT CK_stg_Import_Batch_Error_Count
-            CHECK (
-                error_count IS NULL
-                OR error_count >= 0
-            )
+            CHECK (error_count IS NULL OR error_count >= 0)
     );
 END;
 GO
