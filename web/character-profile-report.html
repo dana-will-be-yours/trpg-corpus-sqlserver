@@ -1,0 +1,2093 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>角色資料圖表</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f6f4;
+      --surface: #ffffff;
+      --surface-2: #eef3f0;
+      --text: #202623;
+      --muted: #5d6964;
+      --line: #d8ddd9;
+      --teal: #28766f;
+      --blue: #3d63a6;
+      --gold: #b3771f;
+      --red: #a94747;
+      --violet: #6b5a9a;
+      --shadow: 0 10px 24px rgba(32, 38, 35, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      letter-spacing: 0;
+    }
+
+    button,
+    textarea,
+    input {
+      font: inherit;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(245, 246, 244, 0.94);
+      backdrop-filter: blur(12px);
+    }
+
+    .title-group h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .title-group p {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .page-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      width: min(1500px, 100%);
+      margin: 0 auto;
+      padding: 12px 24px 0;
+    }
+
+    .page-tab[aria-current="page"] {
+      border-color: var(--teal);
+      background: var(--teal);
+      color: #fff;
+    }
+
+    .button,
+    button {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .button.primary,
+    button.primary {
+      border-color: var(--teal);
+      background: var(--teal);
+      color: #fff;
+    }
+
+    .button input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .page-view[hidden] {
+      display: none;
+    }
+
+    .db-tools {
+      width: min(1500px, 100%);
+      margin: 0 auto;
+      padding: 12px 24px 0;
+    }
+
+    .db-tool-row {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) minmax(120px, 180px) auto auto;
+      gap: 10px;
+      align-items: end;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .db-tool-row label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .db-tool-row input {
+      min-height: 38px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .db-tool-row input:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(40, 118, 111, 0.15);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+      gap: 18px;
+      width: min(1500px, 100%);
+      margin: 0 auto;
+      padding: 18px 24px 32px;
+    }
+
+    .media-page,
+    .freeform-page,
+    .create-page {
+      width: min(1500px, 100%);
+      margin: 0 auto;
+      padding: 18px 24px 32px;
+    }
+
+    .story-page {
+      width: min(1500px, 100%);
+      margin: 0 auto;
+      padding: 18px 24px 32px;
+    }
+
+    .sidebar,
+    .main {
+      min-width: 0;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .panel + .panel {
+      margin-top: 14px;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-head h2,
+    .panel-head h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .panel-body {
+      padding: 16px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      resize: vertical;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fbfcfb;
+      color: var(--text);
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(40, 118, 111, 0.15);
+    }
+
+    .status {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .profile-title {
+      margin: 0 0 4px;
+      font-size: 24px;
+      line-height: 1.25;
+    }
+
+    .profile-meta {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .field-list {
+      display: grid;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .field {
+      display: grid;
+      grid-template-columns: 96px minmax(0, 1fr);
+      gap: 10px;
+      padding-top: 9px;
+      border-top: 1px solid var(--line);
+    }
+
+    .field dt {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .field dd {
+      margin: 0;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(120px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .stat {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .stat .value {
+      display: block;
+      font-size: 26px;
+      line-height: 1.1;
+      font-weight: 700;
+      color: var(--teal);
+    }
+
+    .stat .label {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .chart-box {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .chart-box h3 {
+      margin: 0;
+      padding: 14px 16px 0;
+      font-size: 15px;
+    }
+
+    .chart-canvas {
+      position: relative;
+      height: 300px;
+      padding: 12px 14px 16px;
+    }
+
+    .section-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .section-group {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfb;
+    }
+
+    .section-group h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: var(--teal);
+    }
+
+    .source-item + .source-item {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .source-title {
+      margin: 0 0 4px;
+      font-weight: 700;
+    }
+
+    .source-meta {
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .source-text {
+      margin: 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 920px;
+    }
+
+    th,
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    td {
+      overflow-wrap: anywhere;
+    }
+
+    .empty {
+      padding: 18px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .image-grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 420px) minmax(320px, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .image-slot {
+      display: grid;
+      gap: 12px;
+    }
+
+    .image-slot h3 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .image-preview {
+      display: grid;
+      place-items: center;
+      min-height: 360px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfb;
+      overflow: hidden;
+    }
+
+    .image-preview.compact {
+      aspect-ratio: 1;
+      min-height: 260px;
+    }
+
+    .image-preview.tall {
+      aspect-ratio: 3 / 4;
+      min-height: 520px;
+    }
+
+    .image-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #fbfcfb;
+    }
+
+    .image-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .free-field-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .free-field {
+      display: grid;
+      grid-template-columns: minmax(180px, 260px) minmax(260px, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfb;
+    }
+
+    .free-field label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .free-field input,
+    .free-field textarea {
+      width: 100%;
+      min-height: 38px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+
+    .free-field textarea {
+      min-height: 96px;
+    }
+
+    .free-field input:focus,
+    .free-field textarea:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(40, 118, 111, 0.15);
+    }
+
+    .story-controls {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) minmax(120px, 180px) auto auto;
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    .story-controls label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .story-controls input {
+      min-height: 38px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .story-controls input:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(40, 118, 111, 0.15);
+    }
+
+    .story-summary {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) repeat(4, minmax(110px, 150px));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .story-scroll {
+      max-height: 68vh;
+      overflow-y: auto;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfb;
+    }
+
+    .story-record {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr);
+      gap: 14px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+
+    .story-record + .story-record {
+      margin-top: 10px;
+    }
+
+    .story-marker {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .story-record h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .story-record p {
+      margin: 0;
+    }
+
+    .story-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .story-pill {
+      padding: 3px 7px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface-2);
+    }
+
+    .character-form {
+      display: grid;
+      gap: 14px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .form-grid.wide {
+      grid-template-columns: repeat(2, minmax(240px, 1fr));
+    }
+
+    .form-grid label,
+    .character-form label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .character-form input,
+    .character-form select,
+    .character-form textarea {
+      width: 100%;
+      min-height: 38px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+    }
+
+    .character-form textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .character-form input:focus,
+    .character-form select:focus,
+    .character-form textarea:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(40, 118, 111, 0.15);
+    }
+
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+      }
+
+      .image-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .db-tool-row {
+        grid-template-columns: 1fr;
+      }
+
+      .free-field {
+        grid-template-columns: 1fr;
+      }
+
+      .story-controls,
+      .story-summary,
+      .form-grid,
+      .form-grid.wide {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 14px;
+      }
+
+      .actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .layout {
+        padding: 14px;
+      }
+
+      .page-tabs,
+      .db-tools,
+      .media-page,
+      .freeform-page,
+      .create-page,
+      .story-page {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .stats-grid,
+      .chart-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .image-preview.tall {
+        min-height: 420px;
+      }
+
+      .field {
+        grid-template-columns: 1fr;
+      }
+
+      .story-record {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="title-group">
+      <h1>角色資料圖表</h1>
+      <p>TRPG Corpus DB</p>
+    </div>
+    <div class="actions">
+      <label class="button" for="jsonFile">
+        選擇 JSON
+        <input id="jsonFile" type="file" accept="application/json,.json">
+      </label>
+      <button class="primary" id="loadText" type="button">載入文字</button>
+      <button id="clearData" type="button">清空</button>
+    </div>
+  </header>
+
+  <nav class="page-tabs" aria-label="頁面切換">
+    <button class="page-tab" type="button" data-page-target="profile" aria-current="page">第一頁：角色資料</button>
+    <button class="page-tab" type="button" data-page-target="images">第二頁：角色圖片</button>
+    <button class="page-tab" type="button" data-page-target="freeform">第三頁：自填欄位</button>
+    <button class="page-tab" type="button" data-page-target="story">第四頁：團務劇情</button>
+    <button class="page-tab" type="button" data-page-target="create">第五頁：角色建立</button>
+  </nav>
+
+  <section class="db-tools" id="dbTools" hidden>
+    <div class="db-tool-row">
+      <label>
+        本機 API
+        <input id="apiBaseUrl" type="url" value="http://localhost:8787" autocomplete="off">
+      </label>
+      <label>
+        角色 ID
+        <input id="dbCharacterId" type="number" min="1" step="1" autocomplete="off">
+      </label>
+      <button id="loadFromDb" type="button">讀取資料庫</button>
+      <button class="primary" id="saveCurrentPage" type="button">儲存當前頁</button>
+    </div>
+    <p class="status" id="dbStatus" role="status">尚未連線</p>
+  </section>
+
+  <section class="page-view" id="page-profile">
+    <main class="layout">
+      <aside class="sidebar">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>JSON</h2>
+          </div>
+          <div class="panel-body">
+            <textarea id="jsonInput" spellcheck="false" aria-label="JSON 文字"></textarea>
+            <p class="status" id="status" role="status">尚未載入角色資料</p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>角色概覽</h2>
+          </div>
+          <div class="panel-body" id="profilePanel">
+            <p class="empty">尚無資料</p>
+          </div>
+        </section>
+      </aside>
+
+      <section class="main">
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="chart-grid" id="chartsGrid"></div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>角色資料</h2>
+          </div>
+          <div class="panel-body">
+            <div class="section-list" id="sectionsList">
+              <p class="empty">尚無資料</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>時間序列</h2>
+            <span class="status" id="timelineCount"></span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>場次</th>
+                  <th>場景</th>
+                  <th>來源</th>
+                  <th>類型</th>
+                  <th>角色位置</th>
+                  <th>標題</th>
+                  <th>摘要</th>
+                </tr>
+              </thead>
+              <tbody id="timelineBody">
+                <tr><td colspan="7" class="empty">尚無資料</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+  </section>
+
+  <section class="page-view" id="page-images" hidden>
+    <main class="media-page">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>角色圖片</h2>
+        </div>
+        <div class="panel-body">
+          <div class="image-grid">
+            <section class="image-slot">
+              <h3>大頭照</h3>
+              <div class="image-preview compact">
+                <img id="headshotPreview" alt="角色大頭照預覽" hidden>
+                <p class="empty" id="headshotEmpty">尚未放置圖片</p>
+              </div>
+              <div class="image-actions">
+                <label class="button" for="headshotFile">
+                  選擇圖片
+                  <input id="headshotFile" type="file" accept="image/*">
+                </label>
+                <button id="clearHeadshot" type="button">清除</button>
+              </div>
+            </section>
+
+            <section class="image-slot">
+              <h3>全身立繪</h3>
+              <div class="image-preview tall">
+                <img id="fullbodyPreview" alt="角色全身立繪預覽" hidden>
+                <p class="empty" id="fullbodyEmpty">尚未放置圖片</p>
+              </div>
+              <div class="image-actions">
+                <label class="button" for="fullbodyFile">
+                  選擇圖片
+                  <input id="fullbodyFile" type="file" accept="image/*">
+                </label>
+                <button id="clearFullbody" type="button">清除</button>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <section class="page-view" id="page-freeform" hidden>
+    <main class="freeform-page">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>玩家自填欄位</h2>
+          <div class="actions">
+            <button class="primary" id="addFreeField" type="button">新增欄位</button>
+            <button id="saveFreeFields" type="button">儲存</button>
+            <button id="clearFreeFields" type="button">清空自填資料</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="free-field-list" id="freeFields"></div>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <section class="page-view" id="page-story" hidden>
+    <main class="story-page">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>TRPG 團務劇情匯出</h2>
+        </div>
+        <div class="panel-body">
+          <div class="story-controls">
+            <label>
+              本機 API
+              <input id="storyApiBaseUrl" type="url" value="http://localhost:8787" autocomplete="off">
+            </label>
+            <label>
+              團隊 ID
+              <input id="storyTeamId" type="number" min="1" step="1" autocomplete="off">
+            </label>
+            <button class="primary" id="loadTeamStory" type="button">讀取團務劇情</button>
+            <button id="downloadTeamStory" type="button">匯出 JSON</button>
+          </div>
+          <p class="status" id="storyStatus" role="status">尚未載入團務劇情</p>
+          <div class="story-summary" id="storySummary"></div>
+          <div class="story-scroll" id="storyScroll" tabindex="0" aria-label="團務劇情紀錄">
+            <p class="empty">尚無資料</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <section class="page-view" id="page-create" hidden>
+    <main class="create-page">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>角色建立</h2>
+        </div>
+        <div class="panel-body">
+          <form class="character-form" id="createCharacterForm">
+            <div class="form-grid">
+              <label>
+                本機 API
+                <input id="createApiBaseUrl" name="api_base_url" type="url" value="http://localhost:8787" autocomplete="off">
+              </label>
+              <label>
+                成員 ID
+                <input name="team_member_id" type="number" min="1" step="1" autocomplete="off">
+              </label>
+              <label>
+                角色類型
+                <select name="character_type">
+                  <option value="player_character">玩家角色</option>
+                  <option value="sub_character">副角色</option>
+                  <option value="temporary_character">臨時角色</option>
+                </select>
+              </label>
+            </div>
+            <div class="form-grid">
+              <label>
+                團隊代碼
+                <input name="team_code" type="text" autocomplete="off">
+              </label>
+              <label>
+                成員代碼
+                <input name="member_code" type="text" autocomplete="off">
+              </label>
+              <label>
+                角色代碼
+                <input name="character_code" type="text" required autocomplete="off">
+              </label>
+            </div>
+            <div class="form-grid">
+              <label>
+                角色名稱
+                <input name="character_name" type="text" required autocomplete="off">
+              </label>
+              <label>
+                角色原型
+                <input name="archetype" type="text" autocomplete="off">
+              </label>
+              <label>
+                種族
+                <input name="race_or_species" type="text" autocomplete="off">
+              </label>
+            </div>
+            <div class="form-grid">
+              <label>
+                職業
+                <input name="class_or_profession" type="text" autocomplete="off">
+              </label>
+              <label>
+                陣營
+                <input name="faction" type="text" autocomplete="off">
+              </label>
+              <label>
+                敘事功能
+                <input name="narrative_function" type="text" autocomplete="off">
+              </label>
+            </div>
+            <div class="form-grid wide">
+              <label>
+                角色背景
+                <textarea name="background_story_raw"></textarea>
+              </label>
+              <label>
+                角色個性
+                <textarea name="personality_note"></textarea>
+              </label>
+              <label>
+                角色動機
+                <textarea name="motivation_note"></textarea>
+              </label>
+              <label>
+                角色關係
+                <textarea name="relationship_note"></textarea>
+              </label>
+              <label>
+                能力
+                <textarea name="ability_note"></textarea>
+              </label>
+              <label>
+                物品
+                <textarea name="item_note"></textarea>
+              </label>
+            </div>
+            <div class="actions">
+              <button class="primary" id="createCharacter" type="submit">建立角色</button>
+              <button id="resetCreateCharacter" type="reset">清空表單</button>
+            </div>
+            <p class="status" id="createCharacterStatus" role="status">尚未建立角色</p>
+          </form>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <script>
+    const state = {
+      charts: {},
+      activePage: "profile",
+      payload: null,
+      images: {
+        headshot: null,
+        fullbody: null
+      },
+      freeFields: [],
+      teamStory: null
+    };
+
+    const chartSpecs = [
+      { key: "source_count", title: "資料來源筆數", type: "bar" },
+      { key: "utterance_function", title: "發言功能", type: "doughnut" },
+      { key: "emotion_label", title: "情緒標籤", type: "bar" },
+      { key: "plot_event_type", title: "事件類型", type: "bar" },
+      { key: "plot_event_role", title: "事件中的角色位置", type: "doughnut" },
+      { key: "decision_status", title: "決策狀態", type: "bar" },
+      { key: "consensus_level", title: "共識程度", type: "bar" },
+      { key: "item_category", title: "物品類型", type: "bar" },
+      { key: "retrieval_success_level", title: "查詢結果", type: "bar" }
+    ];
+
+    const palette = [
+      "#28766f",
+      "#3d63a6",
+      "#b3771f",
+      "#a94747",
+      "#6b5a9a",
+      "#517d3d",
+      "#8c5f3f",
+      "#456a78",
+      "#9a4d6d"
+    ];
+
+    const statusNode = document.getElementById("status");
+    const jsonInput = document.getElementById("jsonInput");
+    const fileInput = document.getElementById("jsonFile");
+    const loadTextButton = document.getElementById("loadText");
+    const clearButton = document.getElementById("clearData");
+    const pageTabs = Array.from(document.querySelectorAll(".page-tab"));
+    const pageViews = {
+      profile: document.getElementById("page-profile"),
+      images: document.getElementById("page-images"),
+      freeform: document.getElementById("page-freeform"),
+      story: document.getElementById("page-story"),
+      create: document.getElementById("page-create")
+    };
+    const dbTools = document.getElementById("dbTools");
+    const apiBaseUrl = document.getElementById("apiBaseUrl");
+    const dbCharacterId = document.getElementById("dbCharacterId");
+    const dbStatus = document.getElementById("dbStatus");
+    const loadFromDbButton = document.getElementById("loadFromDb");
+    const saveCurrentPageButton = document.getElementById("saveCurrentPage");
+    const imageInputs = {
+      headshot: document.getElementById("headshotFile"),
+      fullbody: document.getElementById("fullbodyFile")
+    };
+    const imagePreviews = {
+      headshot: document.getElementById("headshotPreview"),
+      fullbody: document.getElementById("fullbodyPreview")
+    };
+    const imageEmptyNodes = {
+      headshot: document.getElementById("headshotEmpty"),
+      fullbody: document.getElementById("fullbodyEmpty")
+    };
+    const clearImageButtons = {
+      headshot: document.getElementById("clearHeadshot"),
+      fullbody: document.getElementById("clearFullbody")
+    };
+    const freeFieldsNode = document.getElementById("freeFields");
+    const addFreeFieldButton = document.getElementById("addFreeField");
+    const saveFreeFieldsButton = document.getElementById("saveFreeFields");
+    const clearFreeFieldsButton = document.getElementById("clearFreeFields");
+    const storyApiBaseUrl = document.getElementById("storyApiBaseUrl");
+    const storyTeamId = document.getElementById("storyTeamId");
+    const storyStatus = document.getElementById("storyStatus");
+    const storySummary = document.getElementById("storySummary");
+    const storyScroll = document.getElementById("storyScroll");
+    const loadTeamStoryButton = document.getElementById("loadTeamStory");
+    const downloadTeamStoryButton = document.getElementById("downloadTeamStory");
+    const createCharacterForm = document.getElementById("createCharacterForm");
+    const createApiBaseUrl = document.getElementById("createApiBaseUrl");
+    const createCharacterStatus = document.getElementById("createCharacterStatus");
+
+    fileInput.addEventListener("change", handleFile);
+    loadTextButton.addEventListener("click", () => loadFromText(jsonInput.value));
+    clearButton.addEventListener("click", clearData);
+    pageTabs.forEach((button) => {
+      button.addEventListener("click", () => switchPage(button.dataset.pageTarget));
+    });
+    loadFromDbButton.addEventListener("click", loadFromDatabase);
+    saveCurrentPageButton.addEventListener("click", saveCurrentPageToDatabase);
+    imageInputs.headshot.addEventListener("change", (event) => handleImageFile(event, "headshot"));
+    imageInputs.fullbody.addEventListener("change", (event) => handleImageFile(event, "fullbody"));
+    clearImageButtons.headshot.addEventListener("click", () => clearImage("headshot"));
+    clearImageButtons.fullbody.addEventListener("click", () => clearImage("fullbody"));
+    addFreeFieldButton.addEventListener("click", () => addFreeField());
+    saveFreeFieldsButton.addEventListener("click", saveFreeFieldsToDatabase);
+    clearFreeFieldsButton.addEventListener("click", clearFreeFields);
+    apiBaseUrl.addEventListener("change", saveDbSettings);
+    dbCharacterId.addEventListener("change", saveDbSettings);
+    storyApiBaseUrl.addEventListener("change", saveStorySettings);
+    storyTeamId.addEventListener("change", saveStorySettings);
+    loadTeamStoryButton.addEventListener("click", loadTeamStoryFromDatabase);
+    downloadTeamStoryButton.addEventListener("click", downloadTeamStoryJson);
+    createApiBaseUrl.addEventListener("change", saveCreateSettings);
+    createCharacterForm.addEventListener("submit", createCharacterInDatabase);
+
+    loadDbSettings();
+    loadStorySettings();
+    loadCreateSettings();
+    renderImages([]);
+    renderFreeFields([]);
+    renderTeamStory(null);
+
+    function handleFile(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = String(reader.result || "");
+        jsonInput.value = text;
+        loadFromText(text);
+      };
+      reader.onerror = () => setStatus("檔案讀取失敗");
+      reader.readAsText(file, "utf-8");
+    }
+
+    function loadFromText(text) {
+      try {
+        const payload = normalizePayload(text);
+        render(payload);
+        const name = payload.profile && payload.profile.character_name ? payload.profile.character_name : "未命名角色";
+        setStatus(`已載入：${name}`);
+      } catch (error) {
+        setStatus(error.message);
+      }
+    }
+
+    function normalizePayload(text) {
+      const cleaned = String(text || "").trim().replace(/^\uFEFF/, "");
+      if (!cleaned) {
+        throw new Error("JSON 內容為空");
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(cleaned);
+      } catch (_) {
+        const objectStart = cleaned.indexOf("{");
+        const objectEnd = cleaned.lastIndexOf("}");
+        if (objectStart < 0 || objectEnd <= objectStart) {
+          throw new Error("JSON 格式無法解析");
+        }
+        parsed = JSON.parse(cleaned.slice(objectStart, objectEnd + 1));
+      }
+
+      if (Array.isArray(parsed)) {
+        parsed = parsed[0] || {};
+      }
+
+      const payload = {
+        profile: parseMaybeJson(parsed.profile) || {},
+        sections: asArray(parseMaybeJson(parsed.sections)),
+        timeline: asArray(parseMaybeJson(parsed.timeline)),
+        charts: asArray(parseMaybeJson(parsed.charts)),
+        images: asArray(parseMaybeJson(parsed.images)),
+        freeform_fields: asArray(parseMaybeJson(parsed.freeform_fields))
+      };
+
+      if (!payload.profile.character_id && !payload.profile.character_name) {
+        throw new Error("缺少 profile 資料");
+      }
+
+      return payload;
+    }
+
+    function parseMaybeJson(value) {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (!trimmed) return null;
+        return JSON.parse(trimmed);
+      }
+      return value;
+    }
+
+    function asArray(value) {
+      return Array.isArray(value) ? value : [];
+    }
+
+    function render(payload) {
+      state.payload = payload;
+      destroyCharts();
+      renderProfile(payload.profile);
+      renderStats(payload.profile);
+      renderCharts(payload.charts);
+      renderSections(payload.sections);
+      renderTimeline(payload.timeline);
+      renderImages(payload.images);
+      renderFreeFields(payload.freeform_fields);
+      if (payload.profile && payload.profile.character_id) {
+        dbCharacterId.value = payload.profile.character_id;
+        saveDbSettings();
+      }
+    }
+
+    function renderProfile(profile) {
+      const panel = document.getElementById("profilePanel");
+      panel.textContent = "";
+
+      const title = document.createElement("h2");
+      title.className = "profile-title";
+      title.textContent = valueOrDash(profile.character_name);
+
+      const meta = document.createElement("p");
+      meta.className = "profile-meta";
+      meta.textContent = [
+        profile.team_code,
+        profile.member_code,
+        profile.character_code
+      ].filter(Boolean).join(" / ");
+
+      const fields = document.createElement("dl");
+      fields.className = "field-list";
+
+      [
+        ["類型", profile.character_type],
+        ["原型", profile.archetype],
+        ["種族", profile.race_or_species],
+        ["職業", profile.class_or_profession],
+        ["陣營", profile.faction],
+        ["狀態", profile.character_status],
+        ["背景", profile.background_story],
+        ["個性", profile.personality_note],
+        ["動機", profile.motivation_note],
+        ["關係", profile.relationship_note]
+      ].forEach(([label, value]) => {
+        const wrap = document.createElement("div");
+        wrap.className = "field";
+        const dt = document.createElement("dt");
+        dt.textContent = label;
+        const dd = document.createElement("dd");
+        dd.textContent = valueOrDash(value);
+        wrap.append(dt, dd);
+        fields.appendChild(wrap);
+      });
+
+      panel.append(title, meta, fields);
+    }
+
+    function renderStats(profile) {
+      const grid = document.getElementById("statsGrid");
+      grid.textContent = "";
+
+      const stats = [
+        ["發言", profile.utterance_count],
+        ["事件", profile.plot_event_count],
+        ["決策", profile.decision_count],
+        ["知識查詢", profile.knowledge_retrieval_count],
+        ["物品", profile.item_count],
+        ["高共識決策", profile.high_consensus_decision_count]
+      ];
+
+      stats.forEach(([label, value]) => {
+        const card = document.createElement("div");
+        card.className = "stat";
+
+        const valueNode = document.createElement("span");
+        valueNode.className = "value";
+        valueNode.textContent = formatNumber(value);
+
+        const labelNode = document.createElement("span");
+        labelNode.className = "label";
+        labelNode.textContent = label;
+
+        card.append(valueNode, labelNode);
+        grid.appendChild(card);
+      });
+    }
+
+    function renderCharts(rows) {
+      const grid = document.getElementById("chartsGrid");
+      grid.textContent = "";
+
+      if (!window.Chart) {
+        grid.innerHTML = '<div class="panel"><p class="empty">Chart.js 未載入，表格資料仍可閱讀</p></div>';
+        return;
+      }
+
+      let chartCount = 0;
+
+      chartSpecs.forEach((spec) => {
+        const chartRows = rows
+          .filter((row) => row.chart_key === spec.key)
+          .map((row) => ({
+            label: String(row.label || ""),
+            value: Number(row.metric_value || 0)
+          }))
+          .filter((row) => row.value > 0);
+
+        if (chartRows.length === 0) return;
+        chartCount += 1;
+
+        const box = document.createElement("section");
+        box.className = "chart-box";
+
+        const title = document.createElement("h3");
+        title.textContent = spec.title;
+
+        const canvasWrap = document.createElement("div");
+        canvasWrap.className = "chart-canvas";
+
+        const canvas = document.createElement("canvas");
+        const canvasId = `chart-${spec.key}`;
+        canvas.id = canvasId;
+        canvasWrap.appendChild(canvas);
+        box.append(title, canvasWrap);
+        grid.appendChild(box);
+
+        state.charts[canvasId] = new Chart(canvas, {
+          type: spec.type,
+          data: {
+            labels: chartRows.map((row) => row.label),
+            datasets: [{
+              label: spec.title,
+              data: chartRows.map((row) => row.value),
+              backgroundColor: chartRows.map((_, index) => palette[index % palette.length]),
+              borderColor: "#ffffff",
+              borderWidth: spec.type === "bar" ? 0 : 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: spec.type !== "bar",
+                position: "bottom"
+              },
+              tooltip: {
+                callbacks: {
+                  label: (item) => `${item.label}: ${formatNumber(item.raw)}`
+                }
+              }
+            },
+            scales: spec.type === "bar" ? {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  precision: 0
+                }
+              }
+            } : {}
+          }
+        });
+      });
+
+      if (chartCount === 0) {
+        grid.innerHTML = '<div class="panel"><p class="empty">尚無圖表資料</p></div>';
+      }
+    }
+
+    function renderSections(sections) {
+      const list = document.getElementById("sectionsList");
+      list.textContent = "";
+
+      if (!sections.length) {
+        list.innerHTML = '<p class="empty">尚無資料</p>';
+        return;
+      }
+
+      const groups = new Map();
+      sections.forEach((section) => {
+        const key = section.section_name || "其他";
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(section);
+      });
+
+      groups.forEach((items, key) => {
+        const group = document.createElement("section");
+        group.className = "section-group";
+
+        const title = document.createElement("h3");
+        title.textContent = key;
+        group.appendChild(title);
+
+        items.forEach((item) => {
+          const article = document.createElement("article");
+          article.className = "source-item";
+
+          const sourceTitle = document.createElement("p");
+          sourceTitle.className = "source-title";
+          sourceTitle.textContent = valueOrDash(item.source_title);
+
+          const meta = document.createElement("p");
+          meta.className = "source-meta";
+          meta.textContent = formatSourceMeta(item);
+
+          const text = document.createElement("p");
+          text.className = "source-text";
+          text.textContent = valueOrDash(item.source_text);
+
+          article.append(sourceTitle, meta, text);
+          group.appendChild(article);
+        });
+
+        list.appendChild(group);
+      });
+    }
+
+    function renderTimeline(timeline) {
+      const body = document.getElementById("timelineBody");
+      const count = document.getElementById("timelineCount");
+      body.textContent = "";
+
+      if (!timeline.length) {
+        count.textContent = "";
+        body.innerHTML = '<tr><td colspan="7" class="empty">尚無資料</td></tr>';
+        return;
+      }
+
+      const limit = 300;
+      const rows = timeline.slice(0, limit);
+      count.textContent = `顯示 ${rows.length} / ${timeline.length} 筆`;
+
+      rows.forEach((item) => {
+        const tr = document.createElement("tr");
+        [
+          item.session_no,
+          item.scene_no,
+          item.source_table,
+          item.type_label,
+          item.role_label,
+          item.title,
+          item.summary_text
+        ].forEach((value) => {
+          const td = document.createElement("td");
+          td.textContent = valueOrDash(value);
+          tr.appendChild(td);
+        });
+        body.appendChild(tr);
+      });
+    }
+
+    function formatSourceMeta(item) {
+      const parts = [
+        item.source_table,
+        item.source_id ? `ID ${item.source_id}` : "",
+        item.session_no ? `場次 ${item.session_no}` : "",
+        item.scene_no ? `場景 ${item.scene_no}` : "",
+        item.turn_no ? `回合 ${item.turn_no}` : ""
+      ].filter(Boolean);
+      return parts.join(" / ");
+    }
+
+    function switchPage(pageKey) {
+      if (!pageViews[pageKey]) return;
+      state.activePage = pageKey;
+
+      pageTabs.forEach((button) => {
+        button.setAttribute("aria-current", button.dataset.pageTarget === pageKey ? "page" : "false");
+      });
+
+      Object.entries(pageViews).forEach(([key, node]) => {
+        node.hidden = key !== pageKey;
+      });
+
+      dbTools.hidden = pageKey === "profile" || pageKey === "story" || pageKey === "create";
+    }
+
+    function handleImageFile(event, slot) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        state.images[slot] = {
+          data_url: String(reader.result || ""),
+          file_name: file.name,
+          mime_type: file.type || "application/octet-stream",
+          size_bytes: file.size,
+          alt_text: slot === "headshot" ? "角色大頭照" : "角色全身立繪",
+          note: ""
+        };
+        renderImageSlot(slot);
+      };
+      reader.onerror = () => setDbStatus("圖片讀取失敗");
+      reader.readAsDataURL(file);
+    }
+
+    function renderImages(rows) {
+      const nextImages = {
+        headshot: null,
+        fullbody: null
+      };
+
+      rows.forEach((row) => {
+        if (row.image_slot === "headshot" || row.image_slot === "fullbody") {
+          nextImages[row.image_slot] = {
+            data_url: row.image_data_url || row.data_url || "",
+            file_name: row.image_file_name || row.file_name || "",
+            mime_type: row.image_mime_type || row.mime_type || "",
+            size_bytes: Number(row.image_size_bytes || row.size_bytes || 0),
+            alt_text: row.image_alt_text || "",
+            note: row.image_note || ""
+          };
+        }
+      });
+
+      state.images = nextImages;
+      renderImageSlot("headshot");
+      renderImageSlot("fullbody");
+    }
+
+    function renderImageSlot(slot) {
+      const image = state.images[slot];
+      const preview = imagePreviews[slot];
+      const empty = imageEmptyNodes[slot];
+
+      if (image && image.data_url) {
+        preview.src = image.data_url;
+        preview.hidden = false;
+        empty.hidden = true;
+      } else {
+        preview.removeAttribute("src");
+        preview.hidden = true;
+        empty.hidden = false;
+      }
+    }
+
+    function clearImage(slot) {
+      state.images[slot] = null;
+      imageInputs[slot].value = "";
+      renderImageSlot(slot);
+    }
+
+    function renderFreeFields(rows) {
+      state.freeFields = rows
+        .map((row, index) => ({
+          field_key: row.field_key || createFieldKey(index + 1),
+          field_label: row.field_label || "",
+          field_value: row.field_value || "",
+          display_order: Number(row.display_order || index + 1)
+        }))
+        .sort((a, b) => a.display_order - b.display_order);
+
+      renderFreeFieldList();
+    }
+
+    function renderFreeFieldList() {
+      freeFieldsNode.textContent = "";
+
+      if (state.freeFields.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = "尚無自填欄位";
+        freeFieldsNode.appendChild(empty);
+        return;
+      }
+
+      state.freeFields.forEach((field, index) => {
+        const wrap = document.createElement("section");
+        wrap.className = "free-field";
+        wrap.dataset.fieldKey = field.field_key;
+
+        const labelWrap = document.createElement("label");
+        labelWrap.textContent = "欄位名稱";
+        const labelInput = document.createElement("input");
+        labelInput.type = "text";
+        labelInput.value = field.field_label;
+        labelInput.placeholder = "例如：角色秘密";
+        labelInput.addEventListener("input", () => {
+          state.freeFields[index].field_label = labelInput.value;
+        });
+        labelWrap.appendChild(labelInput);
+
+        const valueWrap = document.createElement("label");
+        valueWrap.textContent = "內容";
+        const valueInput = document.createElement("textarea");
+        valueInput.value = field.field_value;
+        valueInput.placeholder = "可自由填寫";
+        valueInput.addEventListener("input", () => {
+          state.freeFields[index].field_value = valueInput.value;
+        });
+        valueWrap.appendChild(valueInput);
+
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.textContent = "刪除";
+        removeButton.addEventListener("click", () => {
+          state.freeFields.splice(index, 1);
+          resetFreeFieldOrder();
+          renderFreeFieldList();
+        });
+
+        wrap.append(labelWrap, valueWrap, removeButton);
+        freeFieldsNode.appendChild(wrap);
+      });
+    }
+
+    function addFreeField() {
+      state.freeFields.push({
+        field_key: createFieldKey(Date.now()),
+        field_label: "",
+        field_value: "",
+        display_order: state.freeFields.length + 1
+      });
+      renderFreeFieldList();
+    }
+
+    function clearFreeFields() {
+      state.freeFields = [];
+      renderFreeFieldList();
+    }
+
+    async function loadTeamStoryFromDatabase() {
+      try {
+        const teamId = getTeamId();
+        const payload = await storyApiRequest(`/api/teams/${teamId}/story`);
+        state.teamStory = payload;
+        renderTeamStory(payload);
+        setStoryStatus("已讀取團務劇情");
+      } catch (error) {
+        setStoryStatus(error.message);
+      }
+    }
+
+    function renderTeamStory(payload) {
+      storySummary.textContent = "";
+      storyScroll.textContent = "";
+
+      if (!payload || !payload.team) {
+        storyScroll.innerHTML = '<p class="empty">尚無資料</p>';
+        return;
+      }
+
+      const team = payload.team;
+      const records = Array.isArray(payload.records) ? payload.records : [];
+      const counts = Array.isArray(payload.record_counts) ? payload.record_counts : [];
+
+      const teamCard = document.createElement("div");
+      teamCard.className = "stat";
+      teamCard.innerHTML = `<span class="value">${escapeHtml(team.team_code || team.team_id || "-")}</span><span class="label">${escapeHtml(team.team_name || "團隊")}</span>`;
+      storySummary.appendChild(teamCard);
+
+      [
+        ["場次", countByKind(counts, "session")],
+        ["場景", countByKind(counts, "scene")],
+        ["團務", countByKind(counts, "team_play_history")],
+        ["事件", countByKind(counts, "plot_event")]
+      ].forEach(([label, value]) => {
+        const card = document.createElement("div");
+        card.className = "stat";
+        card.innerHTML = `<span class="value">${formatNumber(value)}</span><span class="label">${label}</span>`;
+        storySummary.appendChild(card);
+      });
+
+      if (!records.length) {
+        storyScroll.innerHTML = '<p class="empty">尚無團務劇情紀錄</p>';
+        return;
+      }
+
+      records.forEach((record) => {
+        const item = document.createElement("article");
+        item.className = "story-record";
+
+        const marker = document.createElement("div");
+        marker.className = "story-marker";
+        marker.innerHTML = [
+          record.session_no ? `場次 ${escapeHtml(record.session_no)}` : "場次 -",
+          record.scene_no ? `場景 ${escapeHtml(record.scene_no)}` : "",
+          record.record_no ? `序號 ${escapeHtml(record.record_no)}` : ""
+        ].filter(Boolean).join("<br>");
+
+        const content = document.createElement("div");
+        const title = document.createElement("h3");
+        title.textContent = valueOrDash(record.title);
+
+        const meta = document.createElement("div");
+        meta.className = "story-meta";
+        [
+          recordLabel(record.record_kind),
+          record.type_label,
+          record.source_code,
+          record.review_status
+        ].filter(Boolean).forEach((value) => {
+          const pill = document.createElement("span");
+          pill.className = "story-pill";
+          pill.textContent = value;
+          meta.appendChild(pill);
+        });
+
+        const text = document.createElement("p");
+        text.className = "source-text";
+        text.textContent = valueOrDash(record.summary_text);
+
+        content.append(title, meta, text);
+
+        if (record.smm_note || record.tms_note) {
+          const note = document.createElement("p");
+          note.className = "source-meta";
+          note.textContent = [
+            record.smm_note ? `SMM：${record.smm_note}` : "",
+            record.tms_note ? `TMS：${record.tms_note}` : ""
+          ].filter(Boolean).join(" / ");
+          content.appendChild(note);
+        }
+
+        item.append(marker, content);
+        storyScroll.appendChild(item);
+      });
+    }
+
+    function downloadTeamStoryJson() {
+      if (!state.teamStory) {
+        setStoryStatus("尚無可匯出的團務劇情");
+        return;
+      }
+
+      const team = state.teamStory.team || {};
+      const filename = `team_story_${team.team_code || team.team_id || "export"}.json`;
+      const blob = new Blob([JSON.stringify(state.teamStory, null, 2)], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setStoryStatus(`已匯出 ${filename}`);
+    }
+
+    async function createCharacterInDatabase(event) {
+      event.preventDefault();
+
+      try {
+        const formData = new FormData(createCharacterForm);
+        const payload = {};
+        formData.forEach((value, key) => {
+          if (key !== "api_base_url") {
+            payload[key] = String(value).trim();
+          }
+        });
+
+        if (!payload.team_member_id) {
+          payload.team_member_id = null;
+        }
+
+        if (!payload.character_code || !payload.character_name) {
+          throw new Error("角色代碼與角色名稱必填");
+        }
+
+        const result = await createApiRequest("/api/characters", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const characterId = result.character_id;
+        createCharacterStatus.textContent = `已建立角色，角色 ID：${characterId}`;
+        apiBaseUrl.value = createApiBaseUrl.value;
+        dbCharacterId.value = characterId;
+        saveDbSettings();
+
+        if (characterId) {
+          const profilePayload = await apiRequest(`/api/characters/${characterId}/profile`);
+          jsonInput.value = JSON.stringify(profilePayload, null, 2);
+          render(profilePayload);
+          setStatus(`已載入：${profilePayload.profile.character_name || characterId}`);
+        }
+      } catch (error) {
+        createCharacterStatus.textContent = error.message;
+      }
+    }
+
+    function countByKind(rows, kind) {
+      const row = rows.find((item) => item.label === kind);
+      return row ? Number(row.metric_value || 0) : 0;
+    }
+
+    function recordLabel(kind) {
+      const labels = {
+        session: "場次",
+        scene: "場景",
+        team_play_history: "團務紀錄",
+        plot_event: "劇情事件",
+        decision: "決策",
+        knowledge_retrieval: "知識查詢",
+        extended_creation_text: "延伸創作"
+      };
+      return labels[kind] || kind;
+    }
+
+    function resetFreeFieldOrder() {
+      state.freeFields.forEach((field, index) => {
+        field.display_order = index + 1;
+      });
+    }
+
+    function createFieldKey(seed) {
+      return `field_${seed}_${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    async function loadFromDatabase() {
+      try {
+        const characterId = getCharacterId();
+        const payload = await apiRequest(`/api/characters/${characterId}/profile`);
+        jsonInput.value = JSON.stringify(payload, null, 2);
+        render(payload);
+        setDbStatus("已讀取資料庫");
+        setStatus(`已載入：${payload.profile.character_name || characterId}`);
+      } catch (error) {
+        setDbStatus(error.message);
+      }
+    }
+
+    async function saveCurrentPageToDatabase() {
+      if (state.activePage === "images") {
+        await saveImagesToDatabase();
+        return;
+      }
+
+      if (state.activePage === "freeform") {
+        await saveFreeFieldsToDatabase();
+      }
+    }
+
+    async function saveImagesToDatabase() {
+      try {
+        const characterId = getCharacterId();
+        await apiRequest(`/api/characters/${characterId}/images`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            headshot: normalizeImageForSave("headshot"),
+            fullbody: normalizeImageForSave("fullbody")
+          })
+        });
+        setDbStatus("圖片已儲存至資料庫");
+      } catch (error) {
+        setDbStatus(error.message);
+      }
+    }
+
+    async function saveFreeFieldsToDatabase() {
+      try {
+        const characterId = getCharacterId();
+        resetFreeFieldOrder();
+        const fields = state.freeFields
+          .filter((field) => field.field_label.trim() || field.field_value.trim())
+          .map((field, index) => ({
+            field_key: field.field_key || createFieldKey(index + 1),
+            field_label: field.field_label.trim() || `欄位 ${index + 1}`,
+            field_value: field.field_value,
+            display_order: index + 1
+          }));
+
+        await apiRequest(`/api/characters/${characterId}/freeform-fields`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ fields })
+        });
+        state.freeFields = fields;
+        renderFreeFieldList();
+        setDbStatus("自填欄位已儲存至資料庫");
+      } catch (error) {
+        setDbStatus(error.message);
+      }
+    }
+
+    function normalizeImageForSave(slot) {
+      const image = state.images[slot];
+      if (!image || !image.data_url) return null;
+
+      return {
+        data_url: image.data_url,
+        file_name: image.file_name || "",
+        mime_type: image.mime_type || "",
+        size_bytes: image.size_bytes || 0,
+        alt_text: image.alt_text || "",
+        note: image.note || ""
+      };
+    }
+
+    async function apiRequest(path, options = {}) {
+      const baseUrl = apiBaseUrl.value.trim().replace(/\/+$/, "");
+      if (!baseUrl) {
+        throw new Error("請填寫本機 API URL");
+      }
+
+      saveDbSettings();
+      const response = await fetch(`${baseUrl}${path}`, options);
+      const text = await response.text();
+
+      if (!response.ok) {
+        let errorMessage = text;
+        try {
+          const errorJson = JSON.parse(text);
+          errorMessage = errorJson.error || errorMessage;
+        } catch (_) {
+        }
+        throw new Error(errorMessage || `HTTP ${response.status}`);
+      }
+
+      return text ? JSON.parse(text) : {};
+    }
+
+    async function storyApiRequest(path, options = {}) {
+      const baseUrl = storyApiBaseUrl.value.trim().replace(/\/+$/, "");
+      if (!baseUrl) {
+        throw new Error("請填寫本機 API URL");
+      }
+
+      saveStorySettings();
+      const response = await fetch(`${baseUrl}${path}`, options);
+      const text = await response.text();
+
+      if (!response.ok) {
+        let errorMessage = text;
+        try {
+          const errorJson = JSON.parse(text);
+          errorMessage = errorJson.error || errorMessage;
+        } catch (_) {
+        }
+        throw new Error(errorMessage || `HTTP ${response.status}`);
+      }
+
+      return text ? JSON.parse(text) : {};
+    }
+
+    async function createApiRequest(path, options = {}) {
+      const baseUrl = createApiBaseUrl.value.trim().replace(/\/+$/, "");
+      if (!baseUrl) {
+        throw new Error("請填寫本機 API URL");
+      }
+
+      saveCreateSettings();
+      const response = await fetch(`${baseUrl}${path}`, options);
+      const text = await response.text();
+
+      if (!response.ok) {
+        let errorMessage = text;
+        try {
+          const errorJson = JSON.parse(text);
+          errorMessage = errorJson.error || errorMessage;
+        } catch (_) {
+        }
+        throw new Error(errorMessage || `HTTP ${response.status}`);
+      }
+
+      return text ? JSON.parse(text) : {};
+    }
+
+    function getCharacterId() {
+      const rawValue = dbCharacterId.value.trim() || (state.payload && state.payload.profile ? state.payload.profile.character_id : "");
+      const characterId = Number(rawValue);
+      if (!Number.isInteger(characterId) || characterId < 1) {
+        throw new Error("請填寫有效的角色 ID");
+      }
+      dbCharacterId.value = String(characterId);
+      saveDbSettings();
+      return characterId;
+    }
+
+    function getTeamId() {
+      const rawValue = storyTeamId.value.trim();
+      const teamId = Number(rawValue);
+      if (!Number.isInteger(teamId) || teamId < 1) {
+        throw new Error("請填寫有效的團隊 ID");
+      }
+      storyTeamId.value = String(teamId);
+      saveStorySettings();
+      return teamId;
+    }
+
+    function loadDbSettings() {
+      const savedApiBaseUrl = localStorage.getItem("characterProfileApiBaseUrl");
+      const savedCharacterId = localStorage.getItem("characterProfileCharacterId");
+      if (savedApiBaseUrl) apiBaseUrl.value = savedApiBaseUrl;
+      if (savedCharacterId) dbCharacterId.value = savedCharacterId;
+    }
+
+    function saveDbSettings() {
+      localStorage.setItem("characterProfileApiBaseUrl", apiBaseUrl.value.trim());
+      localStorage.setItem("characterProfileCharacterId", dbCharacterId.value.trim());
+    }
+
+    function loadStorySettings() {
+      const savedApiBaseUrl = localStorage.getItem("teamStoryApiBaseUrl");
+      const savedTeamId = localStorage.getItem("teamStoryTeamId");
+      if (savedApiBaseUrl) storyApiBaseUrl.value = savedApiBaseUrl;
+      if (savedTeamId) storyTeamId.value = savedTeamId;
+    }
+
+    function saveStorySettings() {
+      localStorage.setItem("teamStoryApiBaseUrl", storyApiBaseUrl.value.trim());
+      localStorage.setItem("teamStoryTeamId", storyTeamId.value.trim());
+    }
+
+    function loadCreateSettings() {
+      const savedApiBaseUrl = localStorage.getItem("createCharacterApiBaseUrl");
+      if (savedApiBaseUrl) createApiBaseUrl.value = savedApiBaseUrl;
+    }
+
+    function saveCreateSettings() {
+      localStorage.setItem("createCharacterApiBaseUrl", createApiBaseUrl.value.trim());
+    }
+
+    function setDbStatus(message) {
+      dbStatus.textContent = message;
+    }
+
+    function setStoryStatus(message) {
+      storyStatus.textContent = message;
+    }
+
+    function destroyCharts() {
+      Object.values(state.charts).forEach((chart) => chart.destroy());
+      state.charts = {};
+    }
+
+    function clearData() {
+      destroyCharts();
+      jsonInput.value = "";
+      document.getElementById("profilePanel").innerHTML = '<p class="empty">尚無資料</p>';
+      document.getElementById("statsGrid").textContent = "";
+      document.getElementById("chartsGrid").textContent = "";
+      document.getElementById("sectionsList").innerHTML = '<p class="empty">尚無資料</p>';
+      document.getElementById("timelineBody").innerHTML = '<tr><td colspan="7" class="empty">尚無資料</td></tr>';
+      document.getElementById("timelineCount").textContent = "";
+      state.payload = null;
+      renderImages([]);
+      renderFreeFields([]);
+      setStatus("尚未載入角色資料");
+      fileInput.value = "";
+    }
+
+    function setStatus(message) {
+      statusNode.textContent = message;
+    }
+
+    function valueOrDash(value) {
+      if (value === null || value === undefined || value === "") return "-";
+      return String(value);
+    }
+
+    function formatNumber(value) {
+      const number = Number(value || 0);
+      return Number.isFinite(number) ? number.toLocaleString("zh-Hant-TW") : "0";
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+  </script>
+</body>
+</html>
