@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>da_go corpus input</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif;
+      background: #f4f1ea;
+      color: #24211d;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { max-width: 1180px; margin: 0 auto; padding: 24px; }
+    h1 { margin: 0 0 16px; font-size: 28px; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 20px; letter-spacing: 0; }
+    .layout { display: grid; grid-template-columns: 360px 1fr; gap: 16px; align-items: start; }
+    section, form, .panel {
+      background: #fffdf8;
+      border: 1px solid #d9d0bf;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    label { display: grid; gap: 6px; margin-bottom: 12px; font-size: 14px; }
+    input, textarea, select, button {
+      font: inherit;
+      border: 1px solid #b8ad9b;
+      border-radius: 6px;
+      padding: 9px 10px;
+      background: #fff;
+      color: #24211d;
+    }
+    textarea { min-height: 260px; resize: vertical; line-height: 1.55; }
+    button { cursor: pointer; background: #2e5d50; color: #fff; border-color: #2e5d50; }
+    button.secondary { background: #fff; color: #2e5d50; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-bottom: 1px solid #e1d8c7; padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #ece6d9; position: sticky; top: 0; }
+    td input, td select { width: 100%; min-width: 110px; }
+    .table-wrap { max-height: 520px; overflow: auto; border: 1px solid #d9d0bf; border-radius: 8px; background: #fff; }
+    .status { min-height: 24px; margin-top: 10px; color: #5a3c12; }
+    @media (max-width: 900px) {
+      main { padding: 16px; }
+      .layout { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>da_go corpus input</h1>
+  <div class="layout">
+    <form id="sourceForm">
+      <h2>來源與批次</h2>
+      <div class="grid">
+        <label>project_code
+          <input name="project_code" value="DAGUO" required>
+        </label>
+        <label>team_code
+          <input name="team_code" value="DAGUO-T01" required>
+        </label>
+        <label>session_code
+          <input name="session_code" value="DA20-CORPUS-RPG-001" required>
+        </label>
+        <label>batch_code
+          <input name="batch_code" value="DAGUO_HTML_UTT_001" required>
+        </label>
+      </div>
+      <label>source_url
+        <input name="source_url" value="https://www.goddessfantasy.net/bbs/index.php?topic=132716.0">
+      </label>
+      <label>source_file_name
+        <input name="source_file_name" value="dago-chronicle.html">
+      </label>
+      <label>輸入 HTML 或文字
+        <textarea id="sourceText" placeholder="貼上論壇列印頁 HTML、純文字團錄，或研究者手動整理內容。"></textarea>
+      </label>
+      <div class="actions">
+        <button type="button" id="parseText">解析</button>
+        <button type="button" id="addRow" class="secondary">新增空列</button>
+        <button type="button" id="clearRows" class="secondary">清空列</button>
+      </div>
+      <div id="status" class="status"></div>
+    </form>
+
+    <section>
+      <h2>stg.Utterance_Import 預覽</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>row</th>
+            <th>speaker_type</th>
+            <th>speaker_code</th>
+            <th>speaker_label_raw</th>
+            <th>function</th>
+            <th>text</th>
+            <th>scene_code</th>
+          </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="actions">
+        <button type="button" id="downloadJson">下載 JSON</button>
+        <button type="button" id="downloadCsv" class="secondary">下載 CSV</button>
+        <button type="button" id="copyJson" class="secondary">複製 JSON</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+const speakerTypes = ["GM", "PL", "PC", "NPC", "Observer", "Researcher"];
+const functions = ["narration", "dialogue", "action", "rule_check", "decision", "negotiation", "question", "clarification", "conflict", "summary"];
+let parsedRows = [];
+
+const $ = (id) => document.getElementById(id);
+$("parseText").addEventListener("click", parseSource);
+$("addRow").addEventListener("click", () => {
+  parsedRows.push(makeRow(parsedRows.length + 1, "", "PC", "", "", "dialogue", "SCN-REVIEW-001"));
+  renderRows();
+});
+$("clearRows").addEventListener("click", () => {
+  parsedRows = [];
+  renderRows();
+});
+$("downloadJson").addEventListener("click", () => download("dago_utterance_import.json", JSON.stringify(buildExport(), null, 2), "application/json;charset=utf-8"));
+$("downloadCsv").addEventListener("click", () => download("dago_utterance_import.csv", toCsv(buildExport().stg_Utterance_Import), "text/csv;charset=utf-8"));
+$("copyJson").addEventListener("click", () => navigator.clipboard && navigator.clipboard.writeText(JSON.stringify(buildExport(), null, 2)));
+
+function formData() {
+  const fd = new FormData($("sourceForm"));
+  return Object.fromEntries(fd.entries());
+}
+
+function parseSource() {
+  const data = formData();
+  const raw = $("sourceText").value.trim();
+  if (!raw) {
+    $("status").textContent = "資料不足，需要新資料提供";
+    return;
+  }
+  const text = htmlToText(raw);
+  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter((line) => line && !isBoilerplate(line));
+  parsedRows = lines.map((line, index) => parseLine(line, index + 1, data));
+  renderRows();
+  $("status").textContent = `已解析 ${parsedRows.length} 列。`;
+}
+
+function htmlToText(raw) {
+  if (!/<[a-z][\s\S]*>/i.test(raw)) return raw;
+  const doc = new DOMParser().parseFromString(raw, "text/html");
+  doc.querySelectorAll("script,style,noscript").forEach((node) => node.remove());
+  doc.querySelectorAll("br").forEach((node) => node.replaceWith("\n"));
+  doc.querySelectorAll("p,div,li,blockquote,td,th,h1,h2,h3,h4").forEach((node) => node.append("\n"));
+  return doc.body ? doc.body.innerText : raw;
+}
+
+function isBoilerplate(line) {
+  return /^(列印本頁|頁:|作者|主題|«|»|Powered by|SMF|簡體中文|繁體中文)$/i.test(line);
+}
+
+function parseLine(line, sourceRowNo) {
+  const match = /^([^:：]{1,40})[:：]\s*(.+)$/.exec(line);
+  const speaker = match ? match[1].trim() : "";
+  const text = match ? match[2].trim() : line;
+  const speakerType = detectSpeakerType(speaker, text);
+  const fn = speakerType === "GM" ? "narration" : "dialogue";
+  return makeRow(sourceRowNo, text, speakerType, detectSpeakerCode(speaker, speakerType), speaker, fn, "SCN-REVIEW-001");
+}
+
+function detectSpeakerType(speaker, text) {
+  const value = `${speaker} ${text}`;
+  if (/GM|主持|黑大拿|大拿/.test(value)) return "GM";
+  if (/研究|觀察|記錄/.test(value)) return "Researcher";
+  if (!speaker) return "Observer";
+  return "PC";
+}
+
+function detectSpeakerCode(speaker, type) {
+  if (type === "GM") return "TM-GM";
+  if (type === "Researcher") return "TM-RESEARCHER";
+  if (!speaker) return null;
+  return `PC-${speaker.replace(/\s+/g, "-").slice(0, 30)}`;
+}
+
+function makeRow(sourceRowNo, text, speakerType, speakerCode, speakerLabel, fn, sceneCode) {
+  const data = formData();
+  return {
+    import_batch_code: data.batch_code,
+    import_batch_id: null,
+    source_row_no: sourceRowNo,
+    project_code: data.project_code,
+    team_code: data.team_code,
+    session_code: data.session_code,
+    scene_code: sceneCode,
+    turn_no_text: String(sourceRowNo),
+    sub_turn_no_text: null,
+    utterance_code: `UTT-${data.session_code}-${String(sourceRowNo).padStart(5, "0")}`.slice(0, 80),
+    speaker_type: speakerType,
+    speaker_code: speakerCode,
+    speaker_label_raw: speakerLabel || null,
+    utterance_function: fn,
+    is_in_character_text: speakerType === "PC" || speakerType === "NPC" ? "1" : "0",
+    is_gm_narration_text: speakerType === "GM" && fn === "narration" ? "1" : "0",
+    is_rule_related_text: fn === "rule_check" ? "1" : "0",
+    is_decision_related_text: ["decision", "negotiation", "clarification"].includes(fn) ? "1" : "0",
+    is_knowledge_related_text: ["question", "clarification", "summary"].includes(fn) ? "1" : "0",
+    start_timecode: null,
+    end_timecode: null,
+    duration_sec_text: null,
+    utterance_text_raw: text,
+    utterance_text_clean: text,
+    utterance_text_verified: null,
+    language_code: "zh-TW",
+    emotion_label: "neutral",
+    interaction_target_type: "unknown",
+    interaction_target_code: null,
+    related_rule_code: null,
+    related_world_setting_code: null,
+    related_item_code: null,
+    ai_summary: null,
+    ai_annotation_json: JSON.stringify({ source_url: data.source_url, source_file_name: data.source_file_name }),
+    human_annotation_note: null,
+    transcription_confidence_text: "1",
+    review_status: "draft",
+    include_in_analysis_text: "1",
+    exclusion_reason: null,
+    import_status: "raw"
+  };
+}
+
+function renderRows() {
+  $("rows").innerHTML = parsedRows.map((row, index) => `
+    <tr data-index="${index}">
+      <td>${row.source_row_no}</td>
+      <td>${selectHtml("speaker_type", row.speaker_type, speakerTypes)}</td>
+      <td><input data-field="speaker_code" value="${esc(row.speaker_code || "")}"></td>
+      <td><input data-field="speaker_label_raw" value="${esc(row.speaker_label_raw || "")}"></td>
+      <td>${selectHtml("utterance_function", row.utterance_function, functions)}</td>
+      <td><input data-field="utterance_text_raw" value="${esc(row.utterance_text_raw || "")}"></td>
+      <td><input data-field="scene_code" value="${esc(row.scene_code || "")}"></td>
+    </tr>
+  `).join("");
+  $("rows").querySelectorAll("input,select").forEach((input) => {
+    input.addEventListener("change", updateRow);
+    input.addEventListener("input", updateRow);
+  });
+}
+
+function selectHtml(field, value, options) {
+  return `<select data-field="${field}">${options.map((option) => `<option value="${option}" ${option === value ? "selected" : ""}>${option}</option>`).join("")}</select>`;
+}
+
+function updateRow(event) {
+  const tr = event.target.closest("tr");
+  const row = parsedRows[Number(tr.dataset.index)];
+  row[event.target.dataset.field] = event.target.value || null;
+  if (event.target.dataset.field === "utterance_text_raw") {
+    row.utterance_text_clean = row.utterance_text_raw;
+  }
+  if (event.target.dataset.field === "speaker_type" || event.target.dataset.field === "utterance_function") {
+    row.is_in_character_text = row.speaker_type === "PC" || row.speaker_type === "NPC" ? "1" : "0";
+    row.is_gm_narration_text = row.speaker_type === "GM" && row.utterance_function === "narration" ? "1" : "0";
+  }
+}
+
+function buildExport() {
+  const data = formData();
+  return {
+    metadata: {
+      export_format: "trpg_corpus_web_input_json_v1",
+      project_code: data.project_code,
+      team_code: data.team_code,
+      session_code: data.session_code,
+      import_batch_code: data.batch_code,
+      source_url: data.source_url,
+      source_file_name: data.source_file_name,
+      exported_at: new Date().toISOString()
+    },
+    stg_Import_Batch: {
+      batch_code: data.batch_code,
+      project_code: data.project_code,
+      source_table_name: "stg.Utterance_Import",
+      source_file_name: data.source_file_name,
+      source_file_type: "json",
+      import_purpose: "web transcript input",
+      imported_by: "web/dago-corpus-input.html",
+      import_status: "created",
+      total_row_count: parsedRows.length
+    },
+    stg_Utterance_Import: parsedRows
+  };
+}
+
+function toCsv(rows) {
+  if (!rows.length) return "";
+  const headers = Object.keys(rows[0]);
+  return [headers.join(",")].concat(rows.map((row) => headers.map((key) => csvCell(row[key])).join(","))).join("\r\n");
+}
+
+function csvCell(value) {
+  if (value == null) return "";
+  return `"${String(value).replace(/"/g, '""')}"`;
+}
+
+function download(fileName, text, type) {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function esc(value) {
+  return String(value == null ? "" : value).replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[char]));
+}
+</script>
+</body>
+</html>
