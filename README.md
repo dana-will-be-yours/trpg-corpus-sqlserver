@@ -8,7 +8,23 @@
 - 資料庫名稱：`TRPG_Corpus_DB`
 - SQL 腳本位置：`database/00_create_database.sql` 至 `database/39_stg_DaGo_Researcher_Story_Import.sql`
 - 本機檢查環境：SQL Server 2025 Express、SQLCMD ODBC Driver 18、SSMS 22 可連線到同一執行個體
-- 已建立物件：`dbo` 27 張表、`stg` 7 張表、`dbo` 8 支程序、`stg` 9 支程序、`dbo` 5 個檢視
+- 已建立物件：`dbo` 27 張表、`stg` 8 張表、`dbo` 8 支程序、`stg` 10 支程序、`dbo` 5 個檢視
+
+## 相關公開頁
+
+`da_go` 遊戲公開頁：
+
+```text
+https://dana-will-be-yours.github.io/da_go/game.html
+```
+
+若要避開瀏覽器快取，可在網址後加上版本參數：
+
+```text
+https://dana-will-be-yours.github.io/da_go/game.html?v=<commit-or-version>
+```
+
+本資料庫提供 `da_go` 讀取的 runtime bundle、研究者新增劇情匯入與遊玩紀錄回寫端點。
 
 ## 用途
 
@@ -167,8 +183,9 @@ foreach ($file in $files) {
 
 - 已快轉本機 `main` 至 GitHub `origin/main`。
 - 已用 SQL Server 2025 Express 與 `sqlcmd -f 65001` 執行 `database/39_stg_DaGo_Researcher_Story_Import.sql`。
+- 已用 SQL Server 2025 Express 與 `sqlcmd -f 65001` 執行 `database/27_stg_DaGo_Game_Run_Import.sql`。
 - 已用 `/api/researcher-stories` 測試研究者劇情 JSON 暫存與驗證。
-- 已核對建立後物件數量：`dbo` 27 張表、`stg` 7 張表、`dbo` 8 支程序、`stg` 9 支程序、`dbo` 5 個檢視。
+- 已核對建立後物件數量：`dbo` 27 張表、`stg` 8 張表、`dbo` 8 支程序、`stg` 10 支程序、`dbo` 5 個檢視。
 - 已查核 Microsoft Learn 關於 SSMS 22 與 `sqlcmd` UTF-8/憑證參數的官方文件。
 - 已保留 SMM 與 TMS 文獻來源。
 
