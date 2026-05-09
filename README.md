@@ -57,6 +57,7 @@ database/24_stg_usp_Validate_Utterance_Import.sql
 database/25_stg_usp_Load_Utterance_Import_To_Dbo.sql
 database/26_performance_indexes.sql
 database/27_character_profile_export.sql
+database/27_stg_DaGo_Game_Run_Import.sql
 database/28_dago_world_manifest_export.sql
 database/29_stg_DaGo_PlayLog_Import.sql
 database/30_stg_usp_Validate_DaGo_PlayLog_Import.sql
@@ -115,6 +116,7 @@ foreach ($file in $files) {
 
 - `dbo.Character_Profile_Image`、`dbo.Character_Freeform_Field`：角色頁圖片與自由欄位。
 - `stg.Import_Batch`、`stg.Utterance_Import`：逐字稿匯入批次與暫存列。
+- `stg.DaGo_Game_Run_Import`：保存 `da_go_playlog_json_v2` 整包 JSON，並透過 `stg.usp_Load_DaGo_Game_Run_Json_To_Staging` 拆入 `stg.Utterance_Import`。
 - `stg.DaGo_PlayLog_Import`：`da_go` 遊戲紀錄回寫。
 - `stg.DaGo_Researcher_Story_Import`：研究者在 `da_go` 編寫的 passage/choice JSON。
 - `stg.Source_Document_Import`、`stg.Source_Text_Block_Import`、`stg.Extended_Creation_Text_Import`：團錄與二創文本匯入。
@@ -140,8 +142,8 @@ foreach ($file in $files) {
 2. `dbo.usp_Export_DaGo_Runtime_Bundle` 匯出 `da_go_runtime_bundle_v1`，內容含 passage、choice、state、NPC 關係與 event pool。
 3. `da_go` 讀取 runtime bundle 後進行單人遊戲。
 4. `POST /api/researcher-stories` 接收研究者新增劇情，寫入 `dbo.Game_Passage` 與 `dbo.Game_Choice`。
-5. `stg.DaGo_PlayLog_Import` 接收遊戲紀錄。
-6. `stg.usp_Load_DaGo_PlayLog_To_Utterance_Import` 轉為 `stg.Utterance_Import` 可處理格式。
+5. `stg.DaGo_PlayLog_Import` 接收遊戲紀錄；若研究者持有整包 `da_go_playlog_json_v2`，也可呼叫 `POST /api/dago-game-runs` 或執行 `stg.usp_Load_DaGo_Game_Run_Json_To_Staging` 直接保存原始 JSON 並拆入 `stg.Utterance_Import`。
+6. `stg.usp_Load_DaGo_PlayLog_To_Utterance_Import` 或 `stg.usp_Load_DaGo_Game_Run_Json_To_Staging` 轉為 `stg.Utterance_Import` 可處理格式。
 
 研究者劇情載入 runtime 表前，資料庫需已有對應 `project_code`、`team_code` 與 `session_code`。缺少對應列時，API 仍會保存 `stg.DaGo_Researcher_Story_Import`，並在回應內提供 `load_error`。
 

@@ -3,7 +3,7 @@
 ## 自我檢查
 
 - 已檢查 `database/12_Utterance.sql`、`23_stg_Utterance_Import.sql`、`24_stg_usp_Validate_Utterance_Import.sql`、`25_stg_usp_Load_Utterance_Import_To_Dbo.sql`。
-- 已加入 `28_dago_world_manifest_export.sql`、`29_stg_DaGo_PlayLog_Import.sql`、`30_stg_usp_Validate_DaGo_PlayLog_Import.sql`、`31_stg_usp_Load_DaGo_PlayLog_To_Utterance_Import.sql`、`38_dago_runtime_bundle.sql`、`39_stg_DaGo_Researcher_Story_Import.sql`。
+- 已加入 `27_stg_DaGo_Game_Run_Import.sql`、`28_dago_world_manifest_export.sql`、`29_stg_DaGo_PlayLog_Import.sql`、`30_stg_usp_Validate_DaGo_PlayLog_Import.sql`、`31_stg_usp_Load_DaGo_PlayLog_To_Utterance_Import.sql`、`38_dago_runtime_bundle.sql`、`39_stg_DaGo_Researcher_Story_Import.sql`。
 - 已加入 `web/dago-corpus-input.html` 與 `tools/dago_corpus_api.ps1`。
 - 已用 `/api/researcher-stories` 測試研究者劇情 JSON 暫存、驗證與載入錯誤回報。
 - 已核對 Microsoft Learn SQL Server JSON 文件與 ACL Anthology TRPG/NLP 論文。
@@ -22,11 +22,13 @@
 9. da_go 輸出 `da_go_playlog_json_v2`。
 10. `stg.DaGo_PlayLog_Import` 保存原始 playlog。
 11. `stg.usp_Load_DaGo_PlayLog_To_Utterance_Import` 轉成既有 `stg.Utterance_Import`。
-12. 再跑既有 `stg.usp_Validate_Utterance_Import` 與 `stg.usp_Load_Utterance_Import_To_Dbo`。
+12. 若使用整包 JSON 匯入，`POST /api/dago-game-runs` 會呼叫 `stg.usp_Load_DaGo_Game_Run_Json_To_Staging` 保存 `game_state` 與 `raw_game_events`，並將 `stg_Utterance_Import` 陣列拆入 `stg.Utterance_Import`。
+13. 再跑既有 `stg.usp_Validate_Utterance_Import` 與 `stg.usp_Load_Utterance_Import_To_Dbo`。
 
 ## SQL 執行順序
 
 ```text
+database/27_stg_DaGo_Game_Run_Import.sql
 database/28_dago_world_manifest_export.sql
 database/29_stg_DaGo_PlayLog_Import.sql
 database/30_stg_usp_Validate_DaGo_PlayLog_Import.sql
@@ -61,6 +63,12 @@ GET http://localhost:8787/api/runtime-bundle?project_code=DAGUO&team_code=DAGUO-
 POST http://localhost:8787/api/dago-playlogs
 ```
 
+提交整包遊玩紀錄並直接拆入 staging：
+
+```text
+POST http://localhost:8787/api/dago-game-runs
+```
+
 提交研究者劇情：
 
 ```text
@@ -73,6 +81,20 @@ POST http://localhost:8787/api/researcher-stories
 
 ```text
 POST http://localhost:8787/api/dago-playlogs/{playlog_code}/load
+```
+
+直接載入整包遊玩紀錄 JSON：
+
+```sql
+DECLARE @json NVARCHAR(MAX);
+
+SELECT @json = BulkColumn
+FROM OPENROWSET(BULK N'C:\data\da_go_playlog.json', SINGLE_CLOB) AS source_file;
+
+EXEC stg.usp_Load_DaGo_Game_Run_Json_To_Staging
+    @source_json = @json,
+    @imported_by = N'researcher',
+    @source_file_name = N'da_go_playlog.json';
 ```
 
 ## 大國年代記輸入規則

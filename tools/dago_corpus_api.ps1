@@ -299,6 +299,61 @@ VALUES
     }
 }
 
+function Invoke-ImportGameRun {
+    param([object]$Payload)
+
+    $gameRun = Get-JsonProperty -Object $Payload -Name "source_json"
+    if ($null -eq $gameRun) {
+        $gameRun = Get-JsonProperty -Object $Payload -Name "game_run_json"
+    }
+    if ($null -eq $gameRun) {
+        $gameRun = Get-JsonProperty -Object $Payload -Name "playlog_json"
+    }
+    if ($null -eq $gameRun) {
+        $gameRun = $Payload
+    }
+
+    if ($gameRun -is [string]) {
+        $sourceJson = [string]$gameRun
+    }
+    else {
+        $sourceJson = ConvertTo-Json -InputObject $gameRun -Depth 80 -Compress
+    }
+
+    $importedBy = Get-FirstTextValue @((Get-JsonProperty -Object $Payload -Name "imported_by"), "api")
+    $sourceFileName = Get-FirstTextValue @((Get-JsonProperty -Object $Payload -Name "source_file_name"), "da_go_playlog.json")
+
+    $connection = New-DbConnection
+    try {
+        $connection.Open()
+        $command = $connection.CreateCommand()
+        $command.CommandText = "EXEC stg.usp_Load_DaGo_Game_Run_Json_To_Staging @source_json = @source_json, @imported_by = @imported_by, @source_file_name = @source_file_name;"
+        [void](Add-DbParameter -Command $command -Name "@source_json" -Type ([System.Data.SqlDbType]::NVarChar) -Size -1 -Value $sourceJson)
+        [void](Add-DbParameter -Command $command -Name "@imported_by" -Type ([System.Data.SqlDbType]::NVarChar) -Size 100 -Value $importedBy)
+        [void](Add-DbParameter -Command $command -Name "@source_file_name" -Type ([System.Data.SqlDbType]::NVarChar) -Size 260 -Value $sourceFileName)
+        $reader = $command.ExecuteReader()
+        $rows = @()
+        do {
+            while ($reader.Read()) {
+                $row = @{}
+                for ($i = 0; $i -lt $reader.FieldCount; $i += 1) {
+                    $row[$reader.GetName($i)] = $reader.GetValue($i)
+                }
+                $rows += $row
+            }
+        } while ($reader.NextResult())
+        $reader.Dispose()
+        return @{
+            ok = $true
+            source_file_name = $sourceFileName
+            validation = $rows
+        }
+    }
+    finally {
+        $connection.Dispose()
+    }
+}
+
 function Invoke-SaveResearcherStory {
     param([object]$Payload)
 
@@ -550,6 +605,13 @@ while ($listener.IsListening) {
         if ($request.HttpMethod -eq "POST" -and $segments.Length -eq 2 -and $segments[0] -eq "api" -and $segments[1] -eq "dago-playlogs") {
             $payload = Read-RequestJson -Request $request
             $result = Invoke-SavePlayLog -Payload $payload
+            Write-ObjectResponse -Response $response -StatusCode 201 -Object $result
+            continue
+        }
+
+        if ($request.HttpMethod -eq "POST" -and $segments.Length -eq 2 -and $segments[0] -eq "api" -and $segments[1] -eq "dago-game-runs") {
+            $payload = Read-RequestJson -Request $request
+            $result = Invoke-ImportGameRun -Payload $payload
             Write-ObjectResponse -Response $response -StatusCode 201 -Object $result
             continue
         }
