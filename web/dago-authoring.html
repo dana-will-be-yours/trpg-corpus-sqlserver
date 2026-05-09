@@ -55,16 +55,16 @@
       <section id="metaPanel">
         <h2>專案設定</h2>
         <div class="grid">
-          <label>story_code<input id="storyCode" value="DAGUO_DC20_OPENING"></label>
+          <label>story_code<input id="storyCode" value="DAGUO_DX10_CHANGSHAN_YEAR"></label>
           <label>project_code<input id="projectCode" value="DAGUO"></label>
           <label>team_code<input id="teamCode" value="DAGUO-T01"></label>
-          <label>session_code<input id="sessionCode" value="DX20-NANJING-002"></label>
+          <label>session_code<input id="sessionCode" value="DX10-CHANGSHAN-001"></label>
           <label>本機 API URL<input id="apiBase" value="http://localhost:8787/api"></label>
         </div>
         <p id="apiStatus" class="status">尚未檢查 API。</p>
         <div class="row">
           <button id="checkApi" type="button">檢查 API</button>
-          <a href="https://dana-will-be-yours.github.io/da_go/game.html?v=1.9.2-fix2" target="_blank" rel="noopener">開啟 da_go 現行遊戲</a>
+          <a href="https://dana-will-be-yours.github.io/da_go/game.html?v=1.11.0-changshan-year" target="_blank" rel="noopener">開啟 da_go 現行遊戲</a>
         </div>
       </section>
 
@@ -136,7 +136,7 @@
   "use strict";
   const store = "dagoAuthoringDraftV2";
   const state = {
-    meta: {story_code: "DAGUO_DC20_OPENING", project_code: "DAGUO", team_code: "DAGUO-T01", session_code: "DX20-NANJING-002"},
+    meta: {story_code: "DAGUO_DX10_CHANGSHAN_YEAR", project_code: "DAGUO", team_code: "DAGUO-T01", session_code: "DX10-CHANGSHAN-001"},
     apiBase: "http://localhost:8787/api",
     passages: [],
     current: null,
@@ -196,7 +196,7 @@
 
   async function loadReference(fromApi) {
     syncMeta();
-    const url = fromApi ? state.apiBase + "/authoring-reference" : "dago-authoring-reference.json?v=1.9.3-authoring-pages";
+    const url = fromApi ? state.apiBase + "/authoring-reference" : "dago-authoring-reference.json?v=1.11.0-changshan-year";
     try {
       const response = await fetch(url, {cache: "no-store"});
       if (!response.ok) throw new Error("HTTP " + response.status);
@@ -234,7 +234,7 @@
     const skills = skillRows.map(row => `<span class="pill">${esc(row.name)} ${esc(row.attr || row.code)}</span>`).join("");
     const locs = locationRows.map(row => `<div class="item"><b>${esc(row.name)}</b><br><span class="muted">${esc(row.code)} / ${esc(row.type)}</span></div>`).join("");
     const tables = [...(ref.database_reference?.runtime_tables || []), ...(ref.database_reference?.authoring_tables || [])].map(x => `<span class="pill">${esc(x)}</span>`).join("");
-    $("referenceBox").innerHTML = `<div><h3>文本參考資料</h3>${docs}<h3>技能</h3><p>${skills}</p></div><aside class="card"><h3>資料庫內容</h3><p>${tables}</p><h3>南京地點</h3>${locs}</aside>`;
+    $("referenceBox").innerHTML = `<div><h3>文本參考資料</h3>${docs}<h3>技能</h3><p>${skills}</p></div><aside class="card"><h3>資料庫內容</h3><p>${tables}</p><h3>常山縣地點</h3>${locs}</aside>`;
   }
 
   function loadSeed() {

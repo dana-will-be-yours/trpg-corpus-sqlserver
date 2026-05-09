@@ -6,7 +6,7 @@
 
 - GitHub `main` HEAD：以 `git log -1 --oneline` 查核最新提交。
 - 資料庫名稱：`TRPG_Corpus_DB`
-- SQL 腳本位置：`database/00_create_database.sql` 至 `database/42_dago_reference_project_story_seed.sql`
+- SQL 腳本位置：`database/00_create_database.sql` 至 `database/43_dago_changshan_year_seed.sql`
 - 本機檢查環境：SQL Server 2025 Express、SQLCMD ODBC Driver 18、SSMS 22 可連線到同一執行個體
 - 已建立物件：`dbo` 36 張表、`stg` 8 張表、`dbo` 8 支程序、`stg` 10 支程序、`dbo` 7 個檢視
 
@@ -30,13 +30,13 @@ https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/web/dago-authoring.ht
 https://dana-will-be-yours.github.io/da_go/game.html
 ```
 
-若要避開瀏覽器快取，可在網址後加上版本參數：
+目前 da_go 驗證網址：
 
 ```text
-https://dana-will-be-yours.github.io/da_go/game.html?v=<commit-or-version>
+https://dana-will-be-yours.github.io/da_go/game.html?v=1.11.0-changshan-year
 ```
 
-本資料庫提供 `da_go` 讀取的 runtime bundle、研究者新增劇情匯入與遊玩紀錄回寫端點。
+本資料庫提供 `da_go` 讀取的 runtime bundle、研究者新增劇情匯入與遊玩紀錄回寫端點。現行公開劇本為「大興十年，天津郡常山縣」。
 
 ## 用途
 
@@ -101,6 +101,7 @@ database/39_stg_DaGo_Researcher_Story_Import.sql
 database/40_dago_nanjing_v5_authoring_schema.sql
 database/41_dago_nanjing_v5_skill_world_seed.sql
 database/42_dago_reference_project_story_seed.sql
+database/43_dago_changshan_year_seed.sql
 ```
 
 含中文字串的 SQL 檔以 UTF-8 讀取。若用 `sqlcmd` 檢查或批次執行，需加 `-f 65001`：
@@ -202,15 +203,11 @@ foreach ($file in $files) {
 
 ## 自我檢查
 
-- 已快轉本機 `main` 至 GitHub `origin/main`。
-- 已用 SQL Server 2025 Express 與 `sqlcmd -f 65001` 執行 `database/39_stg_DaGo_Researcher_Story_Import.sql`。
-- 已用 SQL Server 2025 Express 與 `sqlcmd -f 65001` 執行 `database/27_stg_DaGo_Game_Run_Import.sql`。
-- 已用 SQL Server 2025 Express 與 `sqlcmd -f 65001` 執行 `database/40_dago_nanjing_v5_authoring_schema.sql`、`database/41_dago_nanjing_v5_skill_world_seed.sql`、`database/42_dago_reference_project_story_seed.sql`。
-- 已用 `/api/researcher-stories` 測試研究者劇情 JSON 暫存與驗證。
-- 已核對建立後物件數量：`dbo` 36 張表、`stg` 8 張表、`dbo` 8 支程序、`stg` 10 支程序、`dbo` 7 個檢視。
-- 已用瀏覽器檢查 `web/dago-authoring.html` 可讀取大國年代記種子並產出 `da_go_researcher_story_json_v1`。
-- 已查核 Microsoft Learn 關於 SSMS 22 與 `sqlcmd` UTF-8/憑證參數的官方文件。
-- 已保留 SMM 與 TMS 文獻來源。
+- 已用 `sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -b` 執行 `database/42_dago_scenario_authoring_schema.sql`。
+- 已用同一命令執行 `database/43_dago_changshan_year_seed.sql`。
+- `database/43_dago_changshan_year_seed.sql` 回傳 `changshan_year / 1.11.0-changshan-year / location_count 13 / npc_count 10 / quest_count 3`。
+- 已用瀏覽器檢查 `web/dago-authoring.html` 能讀取常山縣公開參考資料。
+- 已用 Node 檢查 `web/dago-authoring-reference.json` 可解析。
 
 ## 參考文獻
 
