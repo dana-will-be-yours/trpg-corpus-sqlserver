@@ -3,7 +3,7 @@
 ## 自我檢查
 
 - 已檢查 `database/12_Utterance.sql`、`23_stg_Utterance_Import.sql`、`24_stg_usp_Validate_Utterance_Import.sql`、`25_stg_usp_Load_Utterance_Import_To_Dbo.sql`。
-- 已加入 `28_dago_world_manifest_export.sql`、`29_stg_DaGo_PlayLog_Import.sql`、`30_stg_usp_Validate_DaGo_PlayLog_Import.sql`、`31_stg_usp_Load_DaGo_PlayLog_To_Utterance_Import.sql`。
+- 已加入 `28_dago_world_manifest_export.sql`、`29_stg_DaGo_PlayLog_Import.sql`、`30_stg_usp_Validate_DaGo_PlayLog_Import.sql`、`31_stg_usp_Load_DaGo_PlayLog_To_Utterance_Import.sql`、`38_dago_runtime_bundle.sql`。
 - 已加入 `web/dago-corpus-input.html` 與 `tools/dago_corpus_api.ps1`。
 - 已核對 Microsoft Learn SQL Server JSON 文件與 ACL Anthology TRPG/NLP 論文。
 - 資料不足，需要新資料提供：真實團錄發布授權、匿名化規則、角色別名表、正式 SQL Server 連線位置、研究者帳號權限。
@@ -14,11 +14,12 @@
 2. HTML 頁產生 `stg_Import_Batch` 與 `stg_Utterance_Import` JSON/CSV。
 3. SQL Server 匯入 `stg.Utterance_Import` 後執行既有驗證與載入程序。
 4. `dbo.usp_Export_DaGo_World_Manifest` 依 project、team、session 輸出 `da_go_world_manifest_v1`。
-5. da_go 從檔案或 API 讀取 manifest，生成單人遊戲。
-6. da_go 輸出 `da_go_playlog_json_v2`。
-7. `stg.DaGo_PlayLog_Import` 保存原始 playlog。
-8. `stg.usp_Load_DaGo_PlayLog_To_Utterance_Import` 轉成既有 `stg.Utterance_Import`。
-9. 再跑既有 `stg.usp_Validate_Utterance_Import` 與 `stg.usp_Load_Utterance_Import_To_Dbo`。
+5. `dbo.usp_Export_DaGo_Runtime_Bundle` 輸出 `da_go_runtime_bundle_v1`，供前端直接執行。
+6. da_go 從檔案或 API 讀取 runtime bundle，生成單人遊戲。
+7. da_go 輸出 `da_go_playlog_json_v2`。
+8. `stg.DaGo_PlayLog_Import` 保存原始 playlog。
+9. `stg.usp_Load_DaGo_PlayLog_To_Utterance_Import` 轉成既有 `stg.Utterance_Import`。
+10. 再跑既有 `stg.usp_Validate_Utterance_Import` 與 `stg.usp_Load_Utterance_Import_To_Dbo`。
 
 ## SQL 執行順序
 
@@ -27,6 +28,7 @@ database/28_dago_world_manifest_export.sql
 database/29_stg_DaGo_PlayLog_Import.sql
 database/30_stg_usp_Validate_DaGo_PlayLog_Import.sql
 database/31_stg_usp_Load_DaGo_PlayLog_To_Utterance_Import.sql
+database/38_dago_runtime_bundle.sql
 ```
 
 ## API
@@ -41,6 +43,12 @@ powershell -ExecutionPolicy Bypass -File .\tools\dago_corpus_api.ps1 -Prefix "ht
 
 ```text
 GET http://localhost:8787/api/world-manifest?project_code=DAGUO&team_code=DAGUO-T01&session_code=DA20-CORPUS-RPG-001
+```
+
+讀取 runtime bundle：
+
+```text
+GET http://localhost:8787/api/runtime-bundle?project_code=DAGUO&team_code=DAGUO-T01&session_code=DA20-CORPUS-RPG-001
 ```
 
 提交 playlog：

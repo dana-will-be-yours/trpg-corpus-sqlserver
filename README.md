@@ -6,9 +6,9 @@
 
 - GitHub `main` HEAD：`3585009b998a169b4fc97a5027426f70c6f3d4b2`
 - 資料庫名稱：`TRPG_Corpus_DB`
-- SQL 腳本位置：`database/00_create_database.sql` 至 `database/37_stg_usp_Load_Extended_Creation_Text_Import_To_Dbo.sql`
+- SQL 腳本位置：`database/00_create_database.sql` 至 `database/38_dago_runtime_bundle.sql`
 - 本機檢查環境：SQL Server 2025 Express、SQLCMD ODBC Driver 18、SSMS 22 可連線到同一執行個體
-- 已建立物件：`dbo` 22 張表、`stg` 6 張表、`dbo` 7 支程序、`stg` 7 支程序、`dbo` 5 個檢視
+- 已建立物件：`dbo` 27 張表、`stg` 6 張表、`dbo` 8 支程序、`stg` 7 支程序、`dbo` 5 個檢視
 
 ## 用途
 
@@ -67,6 +67,7 @@ database/34_stg_Extended_Creation_Text_Import.sql
 database/35_stg_usp_Load_Source_Document_Json.sql
 database/36_stg_usp_Build_Utterance_Import_From_Source_Text_Block.sql
 database/37_stg_usp_Load_Extended_Creation_Text_Import_To_Dbo.sql
+database/38_dago_runtime_bundle.sql
 ```
 
 含中文字串的 SQL 檔以 UTF-8 讀取。若用 `sqlcmd` 檢查或批次執行，需加 `-f 65001`：
@@ -133,10 +134,11 @@ foreach ($file in $files) {
 
 `da_go` 往返：
 
-1. `dbo.usp_Export_DaGo_World_Manifest` 匯出單人遊戲世界資料。
-2. `da_go` 讀取 JSON 後進行單人遊戲。
-3. `stg.DaGo_PlayLog_Import` 接收遊戲紀錄。
-4. `stg.usp_Load_DaGo_PlayLog_To_Utterance_Import` 轉為 `stg.Utterance_Import` 可處理格式。
+1. `dbo.usp_Export_DaGo_World_Manifest` 匯出研究導向世界資料。
+2. `dbo.usp_Export_DaGo_Runtime_Bundle` 匯出 `da_go_runtime_bundle_v1`，內容含 passage、choice、state、NPC 關係與 event pool。
+3. `da_go` 讀取 runtime bundle 後進行單人遊戲。
+4. `stg.DaGo_PlayLog_Import` 接收遊戲紀錄。
+5. `stg.usp_Load_DaGo_PlayLog_To_Utterance_Import` 轉為 `stg.Utterance_Import` 可處理格式。
 
 ## 常用文件
 
@@ -157,8 +159,8 @@ foreach ($file in $files) {
 ## 自我檢查
 
 - 已快轉本機 `main` 至 GitHub `origin/main`。
-- 已用 SQL Server 2025 Express 與 `sqlcmd -f 65001` 依序執行 `database/00_create_database.sql` 至 `database/37_stg_usp_Load_Extended_Creation_Text_Import_To_Dbo.sql`。
-- 已核對建立後物件數量：`dbo` 22 張表、`stg` 6 張表、`dbo` 7 支程序、`stg` 7 支程序、`dbo` 5 個檢視。
+- 已用 SQL Server 2025 Express 與 `sqlcmd -f 65001` 執行 `database/38_dago_runtime_bundle.sql`。
+- 已核對建立後物件數量：`dbo` 27 張表、`stg` 6 張表、`dbo` 8 支程序、`stg` 7 支程序、`dbo` 5 個檢視。
 - 已查核 Microsoft Learn 關於 SSMS 22 與 `sqlcmd` UTF-8/憑證參數的官方文件。
 - 已保留 SMM 與 TMS 文獻來源。
 

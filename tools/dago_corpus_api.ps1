@@ -159,6 +159,37 @@ function Invoke-WorldManifest {
     }
 }
 
+function Invoke-RuntimeBundle {
+    param
+    (
+        [string]$ProjectCode,
+        [string]$TeamCode,
+        [string]$SessionCode
+    )
+
+    $connection = New-DbConnection
+    try {
+        $connection.Open()
+        $command = $connection.CreateCommand()
+        $command.CommandText = "EXEC dbo.usp_Export_DaGo_Runtime_Bundle @project_code = @project_code, @team_code = @team_code, @session_code = @session_code;"
+        [void](Add-DbParameter -Command $command -Name "@project_code" -Type ([System.Data.SqlDbType]::NVarChar) -Size 50 -Value $ProjectCode)
+        [void](Add-DbParameter -Command $command -Name "@team_code" -Type ([System.Data.SqlDbType]::NVarChar) -Size 50 -Value $TeamCode)
+        $sessionCodeValue = $null
+        if (-not [string]::IsNullOrWhiteSpace($SessionCode)) {
+            $sessionCodeValue = $SessionCode
+        }
+        [void](Add-DbParameter -Command $command -Name "@session_code" -Type ([System.Data.SqlDbType]::NVarChar) -Size 50 -Value $sessionCodeValue)
+        $result = $command.ExecuteScalar()
+        if ($null -eq $result -or $result -is [DBNull]) {
+            throw "No runtime bundle was returned."
+        }
+        return [string]$result
+    }
+    finally {
+        $connection.Dispose()
+    }
+}
+
 function Invoke-SavePlayLog {
     param([object]$Payload)
 
@@ -299,6 +330,13 @@ while ($listener.IsListening) {
         if ($request.HttpMethod -eq "GET" -and $segments.Length -eq 2 -and $segments[0] -eq "api" -and $segments[1] -eq "world-manifest") {
             $query = ConvertFrom-QueryString -Query $request.Url.Query
             $json = Invoke-WorldManifest -ProjectCode $query["project_code"] -TeamCode $query["team_code"] -SessionCode $query["session_code"]
+            Write-JsonResponse -Response $response -StatusCode 200 -Json $json
+            continue
+        }
+
+        if ($request.HttpMethod -eq "GET" -and $segments.Length -eq 2 -and $segments[0] -eq "api" -and $segments[1] -eq "runtime-bundle") {
+            $query = ConvertFrom-QueryString -Query $request.Url.Query
+            $json = Invoke-RuntimeBundle -ProjectCode $query["project_code"] -TeamCode $query["team_code"] -SessionCode $query["session_code"]
             Write-JsonResponse -Response $response -StatusCode 200 -Json $json
             continue
         }
