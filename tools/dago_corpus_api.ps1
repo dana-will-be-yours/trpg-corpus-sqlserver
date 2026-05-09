@@ -96,6 +96,36 @@ function Get-JsonProperty {
     return $property.Value
 }
 
+function Get-FirstTextValue {
+    param([object[]]$Values)
+
+    foreach ($value in $Values) {
+        if ($null -ne $value -and -not [string]::IsNullOrWhiteSpace([string]$value)) {
+            return [string]$value
+        }
+    }
+    return $null
+}
+
+function Convert-ToBooleanValue {
+    param([object]$Value, [bool]$DefaultValue = $true)
+
+    if ($null -eq $Value) {
+        return $DefaultValue
+    }
+    if ($Value -is [bool]) {
+        return [bool]$Value
+    }
+    $text = ([string]$Value).Trim().ToLowerInvariant()
+    if ($text -in @("0", "false", "no", "off")) {
+        return $false
+    }
+    if ($text -in @("1", "true", "yes", "on")) {
+        return $true
+    }
+    return $DefaultValue
+}
+
 function Write-JsonResponse {
     param
     (
@@ -269,6 +299,182 @@ VALUES
     }
 }
 
+function Invoke-SaveResearcherStory {
+    param([object]$Payload)
+
+    $story = $Payload
+    $payloadStory = Get-JsonProperty -Object $Payload -Name "story_json"
+    if ($null -ne $payloadStory) {
+        $story = $payloadStory
+    }
+
+    $storyJson = ConvertTo-Json -InputObject $story -Depth 80 -Compress
+    $metadata = Get-JsonProperty -Object $story -Name "metadata"
+    $config = Get-JsonProperty -Object $story -Name "config"
+
+    $storyCode = Get-FirstTextValue @(
+        (Get-JsonProperty -Object $Payload -Name "story_code"),
+        (Get-JsonProperty -Object $story -Name "story_code")
+    )
+    if ([string]::IsNullOrWhiteSpace($storyCode)) {
+        $sessionCode = Get-FirstTextValue @(
+            (Get-JsonProperty -Object $metadata -Name "session_code"),
+            (Get-JsonProperty -Object $config -Name "session_code")
+        )
+        $timestamp = Get-Date -Format "yyyyMMddHHmmss"
+        $storyCode = "DAGO_STORY_$($sessionCode)_$timestamp"
+    }
+
+    $projectCode = Get-FirstTextValue @(
+        (Get-JsonProperty -Object $Payload -Name "project_code"),
+        (Get-JsonProperty -Object $metadata -Name "project_code"),
+        (Get-JsonProperty -Object $config -Name "project_code")
+    )
+    $teamCode = Get-FirstTextValue @(
+        (Get-JsonProperty -Object $Payload -Name "team_code"),
+        (Get-JsonProperty -Object $metadata -Name "team_code"),
+        (Get-JsonProperty -Object $config -Name "team_code")
+    )
+    $sessionCode = Get-FirstTextValue @(
+        (Get-JsonProperty -Object $Payload -Name "session_code"),
+        (Get-JsonProperty -Object $metadata -Name "session_code"),
+        (Get-JsonProperty -Object $config -Name "session_code")
+    )
+    $autoLoad = Convert-ToBooleanValue -Value (Get-FirstTextValue @(
+        (Get-JsonProperty -Object $Payload -Name "auto_load"),
+        (Get-JsonProperty -Object $story -Name "auto_load")
+    )) -DefaultValue $true
+
+    $validation = @{}
+    $connection = New-DbConnection
+    try {
+        $connection.Open()
+        $transaction = $connection.BeginTransaction()
+        try {
+            $command = $connection.CreateCommand()
+            $command.Transaction = $transaction
+            $command.CommandText = @"
+MERGE stg.DaGo_Researcher_Story_Import AS target
+USING (
+    SELECT
+        @story_code AS story_code,
+        @project_code AS project_code,
+        @team_code AS team_code,
+        @session_code AS session_code,
+        @source_file_name AS source_file_name,
+        @story_json AS story_json,
+        @auto_load AS auto_load
+) AS source
+ON target.story_code = source.story_code
+WHEN MATCHED THEN
+    UPDATE SET
+        project_code = source.project_code,
+        team_code = source.team_code,
+        session_code = source.session_code,
+        source_file_name = source.source_file_name,
+        story_json = source.story_json,
+        auto_load = source.auto_load,
+        validation_status = N'raw',
+        validation_message = NULL,
+        import_status = N'raw',
+        loaded_at = NULL
+WHEN NOT MATCHED THEN
+    INSERT
+    (
+        story_code,
+        project_code,
+        team_code,
+        session_code,
+        source_file_name,
+        story_json,
+        auto_load
+    )
+    VALUES
+    (
+        source.story_code,
+        source.project_code,
+        source.team_code,
+        source.session_code,
+        source.source_file_name,
+        source.story_json,
+        source.auto_load
+    );
+"@
+            [void](Add-DbParameter -Command $command -Name "@story_code" -Type ([System.Data.SqlDbType]::NVarChar) -Size 100 -Value $storyCode)
+            [void](Add-DbParameter -Command $command -Name "@project_code" -Type ([System.Data.SqlDbType]::NVarChar) -Size 50 -Value $projectCode)
+            [void](Add-DbParameter -Command $command -Name "@team_code" -Type ([System.Data.SqlDbType]::NVarChar) -Size 50 -Value $teamCode)
+            [void](Add-DbParameter -Command $command -Name "@session_code" -Type ([System.Data.SqlDbType]::NVarChar) -Size 50 -Value $sessionCode)
+            [void](Add-DbParameter -Command $command -Name "@source_file_name" -Type ([System.Data.SqlDbType]::NVarChar) -Size 260 -Value "da_go_researcher_story.json")
+            [void](Add-DbParameter -Command $command -Name "@story_json" -Type ([System.Data.SqlDbType]::NVarChar) -Size -1 -Value $storyJson)
+            [void](Add-DbParameter -Command $command -Name "@auto_load" -Type ([System.Data.SqlDbType]::Bit) -Value $autoLoad)
+            [void]$command.ExecuteNonQuery()
+
+            $validate = $connection.CreateCommand()
+            $validate.Transaction = $transaction
+            $validate.CommandText = "EXEC stg.usp_Validate_DaGo_Researcher_Story_Import @story_code = @story_code;"
+            [void](Add-DbParameter -Command $validate -Name "@story_code" -Type ([System.Data.SqlDbType]::NVarChar) -Size 100 -Value $storyCode)
+            $reader = $validate.ExecuteReader()
+            if ($reader.Read()) {
+                for ($i = 0; $i -lt $reader.FieldCount; $i += 1) {
+                    $validation[$reader.GetName($i)] = $reader.GetValue($i)
+                }
+            }
+            $reader.Dispose()
+
+            $transaction.Commit()
+        }
+        catch {
+            $transaction.Rollback()
+            throw
+        }
+    }
+    finally {
+        $connection.Dispose()
+    }
+
+    $loadResult = $null
+    $loadError = $null
+    if ($autoLoad -and [string]$validation["validation_status"] -eq "valid") {
+        $loadConnection = New-DbConnection
+        try {
+            $loadConnection.Open()
+            $loadTransaction = $loadConnection.BeginTransaction()
+            try {
+                $load = $loadConnection.CreateCommand()
+                $load.Transaction = $loadTransaction
+                $load.CommandText = "EXEC stg.usp_Load_DaGo_Researcher_Story_To_Runtime @story_code = @story_code;"
+                [void](Add-DbParameter -Command $load -Name "@story_code" -Type ([System.Data.SqlDbType]::NVarChar) -Size 100 -Value $storyCode)
+                $reader = $load.ExecuteReader()
+                $loadResult = @{}
+                if ($reader.Read()) {
+                    for ($i = 0; $i -lt $reader.FieldCount; $i += 1) {
+                        $loadResult[$reader.GetName($i)] = $reader.GetValue($i)
+                    }
+                }
+                $reader.Dispose()
+                $loadTransaction.Commit()
+            }
+            catch {
+                $loadTransaction.Rollback()
+                throw
+            }
+        }
+        catch {
+            $loadError = $_.Exception.Message
+        }
+        finally {
+            $loadConnection.Dispose()
+        }
+    }
+
+    return @{
+        story_code = $storyCode
+        validation = $validation
+        load = $loadResult
+        load_error = $loadError
+    }
+}
+
 function Invoke-LoadPlayLog {
     param([string]$PlaylogCode)
 
@@ -344,6 +550,13 @@ while ($listener.IsListening) {
         if ($request.HttpMethod -eq "POST" -and $segments.Length -eq 2 -and $segments[0] -eq "api" -and $segments[1] -eq "dago-playlogs") {
             $payload = Read-RequestJson -Request $request
             $result = Invoke-SavePlayLog -Payload $payload
+            Write-ObjectResponse -Response $response -StatusCode 201 -Object $result
+            continue
+        }
+
+        if ($request.HttpMethod -eq "POST" -and $segments.Length -eq 2 -and $segments[0] -eq "api" -and $segments[1] -eq "researcher-stories") {
+            $payload = Read-RequestJson -Request $request
+            $result = Invoke-SaveResearcherStory -Payload $payload
             Write-ObjectResponse -Response $response -StatusCode 201 -Object $result
             continue
         }

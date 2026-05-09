@@ -4,11 +4,11 @@
 
 ## 目前版本
 
-- GitHub `main` HEAD：`3585009b998a169b4fc97a5027426f70c6f3d4b2`
+- GitHub `main` HEAD：以 `git log -1 --oneline` 查核最新提交。
 - 資料庫名稱：`TRPG_Corpus_DB`
-- SQL 腳本位置：`database/00_create_database.sql` 至 `database/38_dago_runtime_bundle.sql`
+- SQL 腳本位置：`database/00_create_database.sql` 至 `database/39_stg_DaGo_Researcher_Story_Import.sql`
 - 本機檢查環境：SQL Server 2025 Express、SQLCMD ODBC Driver 18、SSMS 22 可連線到同一執行個體
-- 已建立物件：`dbo` 27 張表、`stg` 6 張表、`dbo` 8 支程序、`stg` 7 支程序、`dbo` 5 個檢視
+- 已建立物件：`dbo` 27 張表、`stg` 7 張表、`dbo` 8 支程序、`stg` 9 支程序、`dbo` 5 個檢視
 
 ## 用途
 
@@ -68,6 +68,7 @@ database/35_stg_usp_Load_Source_Document_Json.sql
 database/36_stg_usp_Build_Utterance_Import_From_Source_Text_Block.sql
 database/37_stg_usp_Load_Extended_Creation_Text_Import_To_Dbo.sql
 database/38_dago_runtime_bundle.sql
+database/39_stg_DaGo_Researcher_Story_Import.sql
 ```
 
 含中文字串的 SQL 檔以 UTF-8 讀取。若用 `sqlcmd` 檢查或批次執行，需加 `-f 65001`：
@@ -115,6 +116,7 @@ foreach ($file in $files) {
 - `dbo.Character_Profile_Image`、`dbo.Character_Freeform_Field`：角色頁圖片與自由欄位。
 - `stg.Import_Batch`、`stg.Utterance_Import`：逐字稿匯入批次與暫存列。
 - `stg.DaGo_PlayLog_Import`：`da_go` 遊戲紀錄回寫。
+- `stg.DaGo_Researcher_Story_Import`：研究者在 `da_go` 編寫的 passage/choice JSON。
 - `stg.Source_Document_Import`、`stg.Source_Text_Block_Import`、`stg.Extended_Creation_Text_Import`：團錄與二創文本匯入。
 
 ## 主要流程
@@ -137,8 +139,11 @@ foreach ($file in $files) {
 1. `dbo.usp_Export_DaGo_World_Manifest` 匯出研究導向世界資料。
 2. `dbo.usp_Export_DaGo_Runtime_Bundle` 匯出 `da_go_runtime_bundle_v1`，內容含 passage、choice、state、NPC 關係與 event pool。
 3. `da_go` 讀取 runtime bundle 後進行單人遊戲。
-4. `stg.DaGo_PlayLog_Import` 接收遊戲紀錄。
-5. `stg.usp_Load_DaGo_PlayLog_To_Utterance_Import` 轉為 `stg.Utterance_Import` 可處理格式。
+4. `POST /api/researcher-stories` 接收研究者新增劇情，寫入 `dbo.Game_Passage` 與 `dbo.Game_Choice`。
+5. `stg.DaGo_PlayLog_Import` 接收遊戲紀錄。
+6. `stg.usp_Load_DaGo_PlayLog_To_Utterance_Import` 轉為 `stg.Utterance_Import` 可處理格式。
+
+研究者劇情載入 runtime 表前，資料庫需已有對應 `project_code`、`team_code` 與 `session_code`。缺少對應列時，API 仍會保存 `stg.DaGo_Researcher_Story_Import`，並在回應內提供 `load_error`。
 
 ## 常用文件
 
@@ -159,8 +164,9 @@ foreach ($file in $files) {
 ## 自我檢查
 
 - 已快轉本機 `main` 至 GitHub `origin/main`。
-- 已用 SQL Server 2025 Express 與 `sqlcmd -f 65001` 執行 `database/38_dago_runtime_bundle.sql`。
-- 已核對建立後物件數量：`dbo` 27 張表、`stg` 6 張表、`dbo` 8 支程序、`stg` 7 支程序、`dbo` 5 個檢視。
+- 已用 SQL Server 2025 Express 與 `sqlcmd -f 65001` 執行 `database/39_stg_DaGo_Researcher_Story_Import.sql`。
+- 已用 `/api/researcher-stories` 測試研究者劇情 JSON 暫存與驗證。
+- 已核對建立後物件數量：`dbo` 27 張表、`stg` 7 張表、`dbo` 8 支程序、`stg` 9 支程序、`dbo` 5 個檢視。
 - 已查核 Microsoft Learn 關於 SSMS 22 與 `sqlcmd` UTF-8/憑證參數的官方文件。
 - 已保留 SMM 與 TMS 文獻來源。
 

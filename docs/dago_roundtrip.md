@@ -3,8 +3,9 @@
 ## 自我檢查
 
 - 已檢查 `database/12_Utterance.sql`、`23_stg_Utterance_Import.sql`、`24_stg_usp_Validate_Utterance_Import.sql`、`25_stg_usp_Load_Utterance_Import_To_Dbo.sql`。
-- 已加入 `28_dago_world_manifest_export.sql`、`29_stg_DaGo_PlayLog_Import.sql`、`30_stg_usp_Validate_DaGo_PlayLog_Import.sql`、`31_stg_usp_Load_DaGo_PlayLog_To_Utterance_Import.sql`、`38_dago_runtime_bundle.sql`。
+- 已加入 `28_dago_world_manifest_export.sql`、`29_stg_DaGo_PlayLog_Import.sql`、`30_stg_usp_Validate_DaGo_PlayLog_Import.sql`、`31_stg_usp_Load_DaGo_PlayLog_To_Utterance_Import.sql`、`38_dago_runtime_bundle.sql`、`39_stg_DaGo_Researcher_Story_Import.sql`。
 - 已加入 `web/dago-corpus-input.html` 與 `tools/dago_corpus_api.ps1`。
+- 已用 `/api/researcher-stories` 測試研究者劇情 JSON 暫存、驗證與載入錯誤回報。
 - 已核對 Microsoft Learn SQL Server JSON 文件與 ACL Anthology TRPG/NLP 論文。
 - 資料不足，需要新資料提供：真實團錄發布授權、匿名化規則、角色別名表、正式 SQL Server 連線位置、研究者帳號權限。
 
@@ -16,10 +17,12 @@
 4. `dbo.usp_Export_DaGo_World_Manifest` 依 project、team、session 輸出 `da_go_world_manifest_v1`。
 5. `dbo.usp_Export_DaGo_Runtime_Bundle` 輸出 `da_go_runtime_bundle_v1`，供前端直接執行。
 6. da_go 從檔案或 API 讀取 runtime bundle，生成單人遊戲。
-7. da_go 輸出 `da_go_playlog_json_v2`。
-8. `stg.DaGo_PlayLog_Import` 保存原始 playlog。
-9. `stg.usp_Load_DaGo_PlayLog_To_Utterance_Import` 轉成既有 `stg.Utterance_Import`。
-10. 再跑既有 `stg.usp_Validate_Utterance_Import` 與 `stg.usp_Load_Utterance_Import_To_Dbo`。
+7. 研究者在 da_go 的「研究者」面板編寫 passage、choice 與正文。
+8. `POST /api/researcher-stories` 保存原始 JSON，驗證後載入 `dbo.Game_Passage` 與 `dbo.Game_Choice`。
+9. da_go 輸出 `da_go_playlog_json_v2`。
+10. `stg.DaGo_PlayLog_Import` 保存原始 playlog。
+11. `stg.usp_Load_DaGo_PlayLog_To_Utterance_Import` 轉成既有 `stg.Utterance_Import`。
+12. 再跑既有 `stg.usp_Validate_Utterance_Import` 與 `stg.usp_Load_Utterance_Import_To_Dbo`。
 
 ## SQL 執行順序
 
@@ -29,6 +32,7 @@ database/29_stg_DaGo_PlayLog_Import.sql
 database/30_stg_usp_Validate_DaGo_PlayLog_Import.sql
 database/31_stg_usp_Load_DaGo_PlayLog_To_Utterance_Import.sql
 database/38_dago_runtime_bundle.sql
+database/39_stg_DaGo_Researcher_Story_Import.sql
 ```
 
 ## API
@@ -56,6 +60,14 @@ GET http://localhost:8787/api/runtime-bundle?project_code=DAGUO&team_code=DAGUO-
 ```text
 POST http://localhost:8787/api/dago-playlogs
 ```
+
+提交研究者劇情：
+
+```text
+POST http://localhost:8787/api/researcher-stories
+```
+
+載入 `dbo.Game_Passage` 與 `dbo.Game_Choice` 前，資料庫需已有對應的 `project_code`、`team_code` 與 `session_code`。若缺少對應列，API 仍會保存 `stg.DaGo_Researcher_Story_Import`，並在回應內提供 `load_error`。
 
 載入 playlog 到既有 staging：
 
