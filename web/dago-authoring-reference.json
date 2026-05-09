@@ -1,0 +1,114 @@
+{
+  "metadata": {
+    "reference_format": "dago_authoring_reference_v1",
+    "repo": "trpg-corpus-sqlserver",
+    "game_url": "https://dana-will-be-yours.github.io/da_go/game.html?v=1.9.2-fix2",
+    "local_api": "http://localhost:8787/api",
+    "target_database": "TRPG_Corpus_DB",
+    "target_import_table": "stg.DaGo_Researcher_Story_Import"
+  },
+  "source_documents": [
+    {"name": "大國年代記世界觀簡史.docx", "type": "world_history", "story_use": "世界觀、勢力、年代與地名參考"},
+    {"name": "TRPG團錄文本(劇本祈禍－PC陽月&楚服&花瓊瑤).docx", "type": "trpg_log", "story_use": "災禍線、南京到南陽與五毒前兆"},
+    {"name": "TRPG團錄文本(劇本素雅－PC陽月&楚服&花瓊瑤).docx", "type": "trpg_log", "story_use": "人物互動、雅藝與人際線"},
+    {"name": "TRPG團錄文本(劇本戎裝節錄－PC陽月&楚服&花瓊瑤).docx", "type": "trpg_log", "story_use": "兵事、官署、北路與行動壓力"},
+    {"name": "TRPG團錄文本(劇本雙孤－PC陽月).docx", "type": "trpg_log", "story_use": "陽月單人線"},
+    {"name": "TRPG團錄文本(劇本雙孤－PC楚服).docx", "type": "trpg_log", "story_use": "楚服單人線"},
+    {"name": "TRPG團錄文本(劇本雙孤－PC花瓊瑤).docx", "type": "trpg_log", "story_use": "花瓊瑤單人線"},
+    {"name": "TRPG團錄二創小說－素雅.docx", "type": "extended_creation", "story_use": "二創語氣與場面參考"},
+    {"name": "TRPG團錄二創小說－戎裝.docx", "type": "extended_creation", "story_use": "二創戰事與服制描寫參考"}
+  ],
+  "database_reference": {
+    "runtime_tables": ["dbo.Game_Passage", "dbo.Game_Choice", "dbo.Game_State_Definition", "dbo.Game_Relationship_Definition", "dbo.Game_Event_Pool"],
+    "authoring_tables": ["dbo.DaGo_Authoring_Role_Definition", "dbo.DaGo_Authoring_Rank_Rule", "dbo.DaGo_Authoring_Difficulty_Rule", "dbo.DaGo_Authoring_Nanjing_Location", "dbo.DaGo_Authoring_Skill_Definition", "dbo.DaGo_Authoring_NPC_Definition", "dbo.DaGo_Authoring_Quest_Definition", "dbo.DaGo_Authoring_Shop_Definition", "dbo.DaGo_Authoring_Event_Pool"],
+    "api_routes": ["GET /api/runtime-bundle", "GET /api/authoring-reference", "POST /api/researcher-stories", "POST /api/dago-playlogs", "POST /api/dago-game-runs"]
+  },
+  "skills": [
+    {"code": "office", "name": "政務", "attr": "tech"},
+    {"code": "jianghu", "name": "江湖", "attr": "mind"},
+    {"code": "observe", "name": "觀察", "attr": "tech"},
+    {"code": "listen", "name": "聆聽", "attr": "tech"},
+    {"code": "speech", "name": "口才", "attr": "mind"},
+    {"code": "social", "name": "交際", "attr": "mind"},
+    {"code": "empathy", "name": "共情", "attr": "mind"},
+    {"code": "geo", "name": "地理", "attr": "mind"},
+    {"code": "nature", "name": "自然", "attr": "mind"},
+    {"code": "medicine", "name": "醫術", "attr": "tech"},
+    {"code": "study", "name": "學藝", "attr": "mind"},
+    {"code": "hide", "name": "躲藏", "attr": "tech"},
+    {"code": "light", "name": "輕功", "attr": "body"},
+    {"code": "outer", "name": "外功", "attr": "body"}
+  ],
+  "locations": [
+    {"code": "Gate", "name": "南京外城", "type": "city_gate"},
+    {"code": "Tea", "name": "南京茶棚", "type": "rumour_hub"},
+    {"code": "Relay", "name": "南京驛舍", "type": "office_route"},
+    {"code": "River", "name": "秦淮河埠", "type": "harbour"},
+    {"code": "Ledger", "name": "南京南市帳房", "type": "market_archive"},
+    {"code": "Kunlun", "name": "南京西街書肆", "type": "bookshop"},
+    {"code": "Yamen", "name": "南京官署", "type": "government"},
+    {"code": "NorthStreet", "name": "南京北街", "type": "north_route"},
+    {"code": "Training", "name": "借住小院", "type": "training"}
+  ],
+  "story_seed": {
+    "story_code": "DAGUO_DC20_REFERENCE_OPENING",
+    "project_code": "DAGUO",
+    "team_code": "DAGUO-T01",
+    "session_code": "DX20-NANJING-002",
+    "passages": [
+      {
+        "passage_code": "NANJING_GATE_REFERENCE",
+        "title": "南京外城",
+        "location": "南京外城",
+        "time_slot": "卯時",
+        "body": "大興二十年的南京，城門口的驛馬、茶棚、南市帳房與官署差役把南陽、崑崙、銀川與五毒的消息帶到同一條街上。",
+        "tags": ["南京", "開局", "大國年代記"],
+        "is_start": true,
+        "sort_order": 100,
+        "choices": [
+          {"id": "TO_TEA", "text": "去茶棚聽南來商旅說話", "target": "TEA_REFERENCE", "utterance_function": "question", "check": {"skill": "listen", "dc": 8}, "conditions": [], "effects": [{"op": "add", "path": "stats.fatigue", "value": 1}], "sort_order": 100},
+          {"id": "TO_YAMEN", "text": "到官署問北路急信", "target": "YAMEN_REFERENCE", "utterance_function": "question", "check": {"skill": "office", "dc": 10}, "conditions": [], "effects": [{"op": "add", "path": "stats.suspicion", "value": 1}], "sort_order": 200}
+        ]
+      },
+      {
+        "passage_code": "TEA_REFERENCE",
+        "title": "城門茶棚",
+        "location": "南京茶棚",
+        "time_slot": "辰時",
+        "body": "茶博士收起抹布。旁桌商旅說起江郡北虎商會、南陽商銀與江夏糧船，也有人低聲提到崑崙受襲。",
+        "tags": ["茶棚", "情報", "南陽", "崑崙"],
+        "is_start": false,
+        "sort_order": 200,
+        "choices": [
+          {"id": "ASK_SOUTH", "text": "請茶博士說清南陽商銀異動", "target": "LEDGER_REFERENCE", "utterance_function": "question", "check": {"skill": "speech", "dc": 10}, "conditions": [], "effects": [{"op": "gain", "value": "南陽帳目疑點"}], "success_text": "茶博士收了錢，說南陽近日有大額拆借。", "failure_text": "茶博士把碗往桌上一扣。", "sort_order": 100}
+        ]
+      },
+      {
+        "passage_code": "YAMEN_REFERENCE",
+        "title": "官署門廊",
+        "location": "南京官署",
+        "time_slot": "巳時",
+        "body": "老書吏不願多談北路，只說魏無紛在銀川，魏無忌在朝中。名字若落到錯的人手裡，後患會很快追上來。",
+        "tags": ["官署", "銀川", "魏氏"],
+        "is_start": false,
+        "sort_order": 300,
+        "choices": [
+          {"id": "CHECK_DOSSIER", "text": "查魏無忌近年任官", "target": "NANJING_GATE_REFERENCE", "utterance_function": "action", "check": {"skill": "office", "dc": 12}, "conditions": [], "effects": [{"op": "gain", "value": "魏無忌任官摘記"}], "sort_order": 100}
+        ]
+      },
+      {
+        "passage_code": "LEDGER_REFERENCE",
+        "title": "南市帳房",
+        "location": "南京南市",
+        "time_slot": "午時",
+        "body": "算籌壓著一張改過數次的借據。南合商會的名號反覆出現，收貨與付款卻分開走。",
+        "tags": ["南市", "帳目", "南陽"],
+        "is_start": false,
+        "sort_order": 400,
+        "choices": [
+          {"id": "BACK_GATE", "text": "把帳目疑點記入札記後回南京外城", "target": "NANJING_GATE_REFERENCE", "utterance_function": "summary", "check": null, "conditions": [], "effects": [{"op": "gain", "value": "帳目來源"}], "sort_order": 100}
+        ]
+      }
+    ]
+  }
+}

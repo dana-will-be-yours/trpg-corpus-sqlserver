@@ -6,11 +6,23 @@
 
 - GitHub `main` HEAD：以 `git log -1 --oneline` 查核最新提交。
 - 資料庫名稱：`TRPG_Corpus_DB`
-- SQL 腳本位置：`database/00_create_database.sql` 至 `database/39_stg_DaGo_Researcher_Story_Import.sql`
+- SQL 腳本位置：`database/00_create_database.sql` 至 `database/42_dago_reference_project_story_seed.sql`
 - 本機檢查環境：SQL Server 2025 Express、SQLCMD ODBC Driver 18、SSMS 22 可連線到同一執行個體
-- 已建立物件：`dbo` 27 張表、`stg` 8 張表、`dbo` 8 支程序、`stg` 10 支程序、`dbo` 5 個檢視
+- 已建立物件：`dbo` 36 張表、`stg` 8 張表、`dbo` 8 支程序、`stg` 10 支程序、`dbo` 7 個檢視
 
 ## 相關公開頁
+
+本倉庫 GitHub Pages：
+
+```text
+https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/
+```
+
+研究者 da_go 劇情編輯頁：
+
+```text
+https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/web/dago-authoring.html
+```
 
 `da_go` 遊戲公開頁：
 
@@ -86,6 +98,9 @@ database/36_stg_usp_Build_Utterance_Import_From_Source_Text_Block.sql
 database/37_stg_usp_Load_Extended_Creation_Text_Import_To_Dbo.sql
 database/38_dago_runtime_bundle.sql
 database/39_stg_DaGo_Researcher_Story_Import.sql
+database/40_dago_nanjing_v5_authoring_schema.sql
+database/41_dago_nanjing_v5_skill_world_seed.sql
+database/42_dago_reference_project_story_seed.sql
 ```
 
 含中文字串的 SQL 檔以 UTF-8 讀取。若用 `sqlcmd` 檢查或批次執行，需加 `-f 65001`：
@@ -157,20 +172,26 @@ foreach ($file in $files) {
 1. `dbo.usp_Export_DaGo_World_Manifest` 匯出研究導向世界資料。
 2. `dbo.usp_Export_DaGo_Runtime_Bundle` 匯出 `da_go_runtime_bundle_v1`，內容含 passage、choice、state、NPC 關係與 event pool。
 3. `da_go` 讀取 runtime bundle 後進行單人遊戲。
-4. `POST /api/researcher-stories` 接收研究者新增劇情，寫入 `dbo.Game_Passage` 與 `dbo.Game_Choice`。
-5. `stg.DaGo_PlayLog_Import` 接收遊戲紀錄；若研究者持有整包 `da_go_playlog_json_v2`，也可呼叫 `POST /api/dago-game-runs` 或執行 `stg.usp_Load_DaGo_Game_Run_Json_To_Staging` 直接保存原始 JSON 並拆入 `stg.Utterance_Import`。
-6. `stg.usp_Load_DaGo_PlayLog_To_Utterance_Import` 或 `stg.usp_Load_DaGo_Game_Run_Json_To_Staging` 轉為 `stg.Utterance_Import` 可處理格式。
+4. GitHub Pages 的 `web/dago-authoring.html` 讀取 `web/dago-authoring-reference.json`，讓研究者參考資料庫欄位、技能、地點、NPC 與文本參考資料後編寫 passage/choice。
+5. `GET /api/authoring-reference` 可從本機 SQL Server 回傳 authoring rules、world rows 與來源文件清單。
+6. `POST /api/researcher-stories` 接收研究者新增劇情，寫入 `dbo.Game_Passage` 與 `dbo.Game_Choice`。
+7. `stg.DaGo_PlayLog_Import` 接收遊戲紀錄；若研究者持有整包 `da_go_playlog_json_v2`，也可呼叫 `POST /api/dago-game-runs` 或執行 `stg.usp_Load_DaGo_Game_Run_Json_To_Staging` 直接保存原始 JSON 並拆入 `stg.Utterance_Import`。
+8. `stg.usp_Load_DaGo_PlayLog_To_Utterance_Import` 或 `stg.usp_Load_DaGo_Game_Run_Json_To_Staging` 轉為 `stg.Utterance_Import` 可處理格式。
 
 研究者劇情載入 runtime 表前，資料庫需已有對應 `project_code`、`team_code` 與 `session_code`。缺少對應列時，API 仍會保存 `stg.DaGo_Researcher_Story_Import`，並在回應內提供 `load_error`。
 
 ## 常用文件
 
 - `快捷使用.md`：可直接貼到 SSMS 的常用查詢。
+- `index.html`：GitHub Pages 首頁。
+- `web/dago-authoring.html`：研究者 da_go 劇情編輯頁。
+- `web/dago-authoring-reference.json`：公開頁可讀取的技能、地點、資料庫與文本參考資料。
 - `docs/dago_roundtrip.md`：`da_go` 與本資料庫的資料往返流程。
 - `docs/source_document_ingest.md`：團錄與二創文本匯入流程。
 - `docs/角色背景彙整與HTML圖表匯出.md`：角色資料頁與 HTML 圖表匯出流程。
 - `database/TRPG_Corpus_DB_正式表關聯圖.md`：正式表關聯摘要。
 - `database/TRPG_SSMS22_staging_import_template_20260505.xlsx`：SSMS 22 匯入範本。
+- `文本參考資料/`：大國年代記世界觀、團錄與二創小說原始參考檔。
 
 ## GitHub 與研究資料注意事項
 
@@ -184,8 +205,10 @@ foreach ($file in $files) {
 - 已快轉本機 `main` 至 GitHub `origin/main`。
 - 已用 SQL Server 2025 Express 與 `sqlcmd -f 65001` 執行 `database/39_stg_DaGo_Researcher_Story_Import.sql`。
 - 已用 SQL Server 2025 Express 與 `sqlcmd -f 65001` 執行 `database/27_stg_DaGo_Game_Run_Import.sql`。
+- 已用 SQL Server 2025 Express 與 `sqlcmd -f 65001` 執行 `database/40_dago_nanjing_v5_authoring_schema.sql`、`database/41_dago_nanjing_v5_skill_world_seed.sql`、`database/42_dago_reference_project_story_seed.sql`。
 - 已用 `/api/researcher-stories` 測試研究者劇情 JSON 暫存與驗證。
-- 已核對建立後物件數量：`dbo` 27 張表、`stg` 8 張表、`dbo` 8 支程序、`stg` 10 支程序、`dbo` 5 個檢視。
+- 已核對建立後物件數量：`dbo` 36 張表、`stg` 8 張表、`dbo` 8 支程序、`stg` 10 支程序、`dbo` 7 個檢視。
+- 已用瀏覽器檢查 `web/dago-authoring.html` 可讀取大國年代記種子並產出 `da_go_researcher_story_json_v1`。
 - 已查核 Microsoft Learn 關於 SSMS 22 與 `sqlcmd` UTF-8/憑證參數的官方文件。
 - 已保留 SMM 與 TMS 文獻來源。
 

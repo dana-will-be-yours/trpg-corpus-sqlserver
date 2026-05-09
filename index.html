@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TRPG Corpus SQL Server</title>
+  <style>
+    :root{color-scheme:dark;--bg:#121212;--panel:#202020;--line:#555;--text:#eee;--muted:#b8b8b8;--gold:#ffd866;--blue:#7db4ff}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Verdana,Arial,"Microsoft JhengHei",sans-serif;line-height:1.65}
+    header,main{max-width:74rem;margin:auto;padding:1.25rem}
+    header{border-bottom:1px solid var(--line)}
+    h1,h2{color:var(--gold);margin:.2rem 0 .6rem}
+    a{color:var(--blue)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:.8rem}
+    .card{border:1px solid var(--line);background:var(--panel);padding:1rem;border-radius:6px}
+    .muted{color:var(--muted)}
+    code{background:#080808;border:1px solid #444;padding:.08rem .25rem;border-radius:3px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>TRPG Corpus SQL Server</h1>
+    <p class="muted">研究者用 SQL Server 語料資料庫、da_go 劇情編輯頁與本機 API 文件入口。</p>
+  </header>
+  <main>
+    <section class="grid">
+      <article class="card">
+        <h2>劇情編輯</h2>
+        <p>編寫 da_go 的 passage、choice、檢定、條件與效果，並匯出可送入 <code>stg.DaGo_Researcher_Story_Import</code> 的 JSON。</p>
+        <p><a href="web/dago-authoring.html">開啟 dago-authoring.html</a></p>
+      </article>
+      <article class="card">
+        <h2>語料輸入</h2>
+        <p>將團錄、二創與世界觀資料轉成來源文件與文字區塊 staging。</p>
+        <p><a href="web/dago-corpus-input.html">開啟 dago-corpus-input.html</a></p>
+      </article>
+      <article class="card">
+        <h2>角色資料</h2>
+        <p>檢視角色資料頁與 HTML 圖表輸出。</p>
+        <p><a href="web/character-profile-report.html">開啟 character-profile-report.html</a></p>
+      </article>
+      <article class="card">
+        <h2>遊戲公開頁</h2>
+        <p>目前 da_go 遊戲公開網址。</p>
+        <p><a href="https://dana-will-be-yours.github.io/da_go/game.html?v=1.9.2-fix2">開啟 da_go</a></p>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

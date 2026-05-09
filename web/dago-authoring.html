@@ -1,1 +1,447 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DaGo 劇情編寫介面</title><style>body{margin:0;background:#111;color:#eee;font-family:Verdana,Arial,'Microsoft JhengHei',sans-serif;line-height:1.55}.wrap{display:grid;grid-template-columns:18rem 1fr;min-height:100vh}aside{background:#222;border-right:1px solid #555;padding:1rem}main{padding:1rem;max-width:80rem}h1,h2{color:#ffd700}button,input,textarea,select{font:inherit;background:#333;color:#eee;border:1px solid #555;padding:.45rem}button{cursor:pointer}label{display:grid;gap:.2rem;margin:.4rem 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:.7rem}.card,.item{border:1px solid #555;background:#222;padding:.7rem;margin:.4rem 0}textarea{width:100%;min-height:7rem}.wide{grid-column:1/-1}pre{white-space:pre-wrap;background:#050505;border:1px solid #444;padding:.8rem;max-height:30rem;overflow:auto}.muted{color:#bbb}</style></head><body><div class="wrap"><aside><h1>DaGo 編寫</h1><p class="muted">研究者編寫地點、NPC、場景、選項與檢定，再匯出 JSON 匯入 SQL Server。</p><button data-panel="meta">專案</button><button data-panel="passages">場景</button><button data-panel="choices">選項</button><button data-panel="export">匯出 JSON</button><hr><button id="loadExample">載入範例</button><button id="saveLocal">本機保存</button><button id="loadLocal">讀取保存</button></aside><main><section id="metaPanel"><h2>專案設定</h2><div class="grid"><label>story_code<input id="storyCode" value="DAGUO_DC20_OPENING"></label><label>project_code<input id="projectCode" value="DAGUO"></label><label>team_code<input id="teamCode" value="DAGUO-T01"></label><label>session_code<input id="sessionCode" value="DA20-PLAYABLE-001"></label></div></section><section id="passagesPanel" hidden><h2>場景</h2><button id="addPassage">新增場景</button><div id="passageList"></div><div class="card"><h3>場景編輯</h3><div class="grid"><label>passage_code<input id="pCode"></label><label>title<input id="pTitle"></label><label>location<input id="pLocation"></label><label>time_slot<input id="pTime"></label><label>sort_order<input id="pSort" type="number" value="100"></label><label>is_start<select id="pStart"><option value="false">false</option><option value="true">true</option></select></label><label class="wide">body<textarea id="pBody"></textarea></label><label class="wide">tags，一行一個<textarea id="pTags"></textarea></label></div><button id="savePassage">保存場景</button></div></section><section id="choicesPanel" hidden><h2>選項</h2><div class="grid"><label>所屬場景<select id="choicePassage"></select></label><label>choice_code<input id="cCode"></label><label>text<input id="cText"></label><label>target<select id="cTarget"></select></label><label>function<select id="cFunc"><option>action</option><option>question</option><option>decision</option><option>negotiation</option><option>summary</option></select></label><label>skill<select id="cSkill"><option value="">無</option><option value="office">政務</option><option value="jianghu">江湖</option><option value="observe">觀察</option><option value="listen">聆聽</option><option value="speech">口才</option><option value="social">交際</option><option value="empathy">共情</option><option value="geo">地理</option><option value="nature">自然</option><option value="medicine">醫術</option><option value="study">學藝</option><option value="hide">躲藏</option><option value="light">輕功</option><option value="outer">外功</option></select></label><label>DC<select id="cDc"><option value="0">無</option><option value="8">8 簡單</option><option value="10">10 基礎挑戰</option><option value="12">12 標準挑戰</option><option value="14">14 困難</option><option value="16">16 很困難</option><option value="18">18 極難</option><option value="20">20 傳奇級</option></select></label><label>need<input id="cNeed"></label><label>gain<input id="cGain"></label><label class="wide">success text<textarea id="cSuccess"></textarea></label><label class="wide">failure text<textarea id="cFailure"></textarea></label></div><button id="saveChoice">保存選項</button><div id="choiceList"></div></section><section id="exportPanel" hidden><h2>匯出 JSON</h2><button id="buildJson">產生 JSON</button><button id="copyJson">複製</button><button id="downloadJson">下載</button><pre id="jsonOut"></pre></section></main></div><script>const store='dagoAuthoringDraft';const state={meta:{story_code:'DAGUO_DC20_OPENING',project_code:'DAGUO',team_code:'DAGUO-T01',session_code:'DA20-PLAYABLE-001'},passages:[],current:null};const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>show(b.dataset.panel));function show(n){['meta','passages','choices','export'].forEach(x=>$(x+'Panel').hidden=x!==n);if(n==='passages')renderPassages();if(n==='choices')renderChoices();if(n==='export')buildJson()}function syncMeta(){state.meta={story_code:$('storyCode').value.trim(),project_code:$('projectCode').value.trim(),team_code:$('teamCode').value.trim(),session_code:$('sessionCode').value.trim()}}function readTags(v){return String(v||'').split(/\n+/).map(x=>x.trim()).filter(Boolean)}function uid(p){return p+'_'+Math.random().toString(36).slice(2,8)}$('addPassage').onclick=()=>{let code=uid('P');state.passages.push({passage_code:code,title:'新場景',location:'',time_slot:'',body:'',tags:['researcher'],is_start:state.passages.length===0,sort_order:(state.passages.length+1)*100,choices:[]});editPassage(code)};$('savePassage').onclick=()=>{let p=state.passages.find(x=>x.passage_code===state.current)||state.passages[0];if(!p)return;p.passage_code=$('pCode').value.trim();p.title=$('pTitle').value.trim();p.location=$('pLocation').value.trim();p.time_slot=$('pTime').value.trim();p.sort_order=+$('pSort').value||100;p.is_start=$('pStart').value==='true';p.body=$('pBody').value;p.tags=readTags($('pTags').value);state.current=p.passage_code;renderPassages();renderChoices()};function editPassage(code){let p=state.passages.find(x=>x.passage_code===code);if(!p)return;state.current=code;$('pCode').value=p.passage_code;$('pTitle').value=p.title;$('pLocation').value=p.location||'';$('pTime').value=p.time_slot||'';$('pSort').value=p.sort_order||100;$('pStart').value=String(!!p.is_start);$('pBody').value=p.body||'';$('pTags').value=(p.tags||[]).join('\n')}function renderPassages(){let list=$('passageList');list.innerHTML=state.passages.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).map(p=>'<div class="item"><b>'+esc(p.title)+'</b><br><small>'+esc(p.passage_code)+' / '+esc(p.location||'')+'</small><br><button data-edit="'+esc(p.passage_code)+'">編輯</button></div>').join('');list.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editPassage(b.dataset.edit))}function optionHtml(){return state.passages.map(p=>'<option value="'+esc(p.passage_code)+'">'+esc(p.title)+' ('+esc(p.passage_code)+')</option>').join('')}function renderChoices(){let opts=optionHtml();$('choicePassage').innerHTML=opts;$('cTarget').innerHTML='<option value="">無</option>'+opts;if(state.current)$('choicePassage').value=state.current;renderChoiceList()}$('choicePassage').onchange=renderChoiceList;$('saveChoice').onclick=()=>{let p=state.passages.find(x=>x.passage_code===$('choicePassage').value);if(!p)return;let c={id:$('cCode').value.trim()||uid('C'),text:$('cText').value.trim(),target:$('cTarget').value||null,utterance_function:$('cFunc').value,check:$('cSkill').value?{skill:$('cSkill').value,dc:+$('cDc').value||8}:null,conditions:$('cNeed').value.trim()?[{op:'has',path:'flags',value:$('cNeed').value.trim()}]:[],effects:$('cGain').value.trim()?[{op:'gain',value:$('cGain').value.trim()}]:[],success_text:$('cSuccess').value.trim(),failure_text:$('cFailure').value.trim(),sort_order:(p.choices.length+1)*100};p.choices.push(c);['cCode','cText','cNeed','cGain','cSuccess','cFailure'].forEach(id=>$(id).value='');renderChoiceList()};function renderChoiceList(){let p=state.passages.find(x=>x.passage_code===$('choicePassage').value);$('choiceList').innerHTML=p?(p.choices||[]).map(c=>'<div class="item"><b>'+esc(c.text)+'</b><br><small>'+esc(c.id)+' → '+esc(c.target||'')+'</small></div>').join(''):''}function buildJson(){syncMeta();let txt=JSON.stringify({metadata:state.meta,passages:state.passages},null,2);$('jsonOut').textContent=txt;return txt}$('buildJson').onclick=buildJson;$('copyJson').onclick=()=>navigator.clipboard?.writeText(buildJson());$('downloadJson').onclick=()=>{let b=new Blob([buildJson()],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=(state.meta.story_code||'dago_story')+'.json';a.click();URL.revokeObjectURL(u)};$('saveLocal').onclick=()=>{syncMeta();localStorage.setItem(store,JSON.stringify(state))};$('loadLocal').onclick=()=>{let raw=localStorage.getItem(store);if(raw)Object.assign(state,JSON.parse(raw));fillMeta();renderPassages();renderChoices()};$('loadExample').onclick=()=>{state.meta={story_code:'DAGUO_DC20_OPENING',project_code:'DAGUO',team_code:'DAGUO-T01',session_code:'DA20-PLAYABLE-001'};state.passages=[{passage_code:'NANJING_GATE',title:'南京外城',location:'南京',time_slot:'卯時',body:'城門外的雨痕尚未乾，驛馬從石道上踏過。近幾日，中南部銀錢流向異常。',tags:['南京','開局'],is_start:true,sort_order:100,choices:[{id:'TO_TEA',text:'去茶棚聽南來商旅說話',target:'TEA_STALL',utterance_function:'question',check:{skill:'listen',dc:8},conditions:[],effects:[],sort_order:100}]},{passage_code:'TEA_STALL',title:'城門茶棚',location:'南京茶棚',time_slot:'辰時',body:'茶博士收起抹布。旁桌兩名商旅說起江郡北虎商會、南陽商銀與江夏糧船。',tags:['茶棚','情報'],is_start:false,sort_order:200,choices:[]}];fillMeta();renderPassages();renderChoices();show('passages')};function fillMeta(){$('storyCode').value=state.meta.story_code;$('projectCode').value=state.meta.project_code;$('teamCode').value=state.meta.team_code;$('sessionCode').value=state.meta.session_code}fillMeta();show('meta');</script></body></html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DaGo 劇情編寫介面</title>
+  <style>
+    :root{color-scheme:dark;--bg:#111;--panel:#202020;--panel2:#292929;--line:#555;--text:#eee;--muted:#b8b8b8;--gold:#ffd866;--blue:#7db4ff;--ok:#8ee88e;--bad:#ff8989}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Verdana,Arial,"Microsoft JhengHei",sans-serif;line-height:1.6}
+    .wrap{display:grid;grid-template-columns:19rem minmax(0,1fr);min-height:100vh}
+    aside{background:#1c1c1c;border-right:1px solid var(--line);padding:1rem;position:sticky;top:0;height:100vh;overflow:auto}
+    main{padding:1rem;max-width:86rem}
+    h1,h2,h3{color:var(--gold);margin:.25rem 0 .65rem}
+    a{color:var(--blue)}
+    button,input,textarea,select{font:inherit;background:#303030;color:var(--text);border:1px solid var(--line);padding:.45rem;border-radius:4px}
+    button{cursor:pointer}
+    button:hover{border-color:#888}
+    textarea{width:100%;min-height:7rem;resize:vertical}
+    label{display:grid;gap:.25rem;margin:.4rem 0}
+    nav{display:grid;grid-template-columns:1fr;gap:.45rem}
+    pre{white-space:pre-wrap;background:#050505;border:1px solid #444;padding:.8rem;max-height:30rem;overflow:auto}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:.7rem}
+    .card,.item{border:1px solid var(--line);background:var(--panel);padding:.75rem;border-radius:6px;margin:.45rem 0}
+    .wide{grid-column:1/-1}
+    .muted{color:var(--muted)}
+    .row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+    .status{border-left:4px solid var(--line);padding:.5rem .75rem;background:#181818}
+    .status.ok{border-left-color:var(--ok)}
+    .status.bad{border-left-color:var(--bad)}
+    .pill{display:inline-block;border:1px solid #666;border-radius:999px;padding:.1rem .45rem;margin:.1rem;color:#ddd}
+    .split{display:grid;grid-template-columns:minmax(0,1fr) 20rem;gap:1rem}
+    @media (max-width: 860px){.wrap{grid-template-columns:1fr}aside{position:static;height:auto}.split{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <aside>
+      <h1>DaGo 編寫</h1>
+      <p class="muted">研究者編寫場景、選項、檢定、條件與效果，匯出後可送入 TRPG Corpus。</p>
+      <nav>
+        <button data-panel="meta" type="button">專案</button>
+        <button data-panel="reference" type="button">資料參考</button>
+        <button data-panel="passages" type="button">場景</button>
+        <button data-panel="choices" type="button">選項</button>
+        <button data-panel="export" type="button">匯出與送出</button>
+      </nav>
+      <hr>
+      <button id="loadSeed" type="button">載入大國年代記種子</button>
+      <button id="saveLocal" type="button">本機保存</button>
+      <button id="loadLocal" type="button">讀取保存</button>
+      <p class="muted">GitHub Pages 只提供編輯與匯出。送入 SQL Server 需啟動本機 API。</p>
+    </aside>
+    <main>
+      <section id="metaPanel">
+        <h2>專案設定</h2>
+        <div class="grid">
+          <label>story_code<input id="storyCode" value="DAGUO_DC20_OPENING"></label>
+          <label>project_code<input id="projectCode" value="DAGUO"></label>
+          <label>team_code<input id="teamCode" value="DAGUO-T01"></label>
+          <label>session_code<input id="sessionCode" value="DX20-NANJING-002"></label>
+          <label>本機 API URL<input id="apiBase" value="http://localhost:8787/api"></label>
+        </div>
+        <p id="apiStatus" class="status">尚未檢查 API。</p>
+        <div class="row">
+          <button id="checkApi" type="button">檢查 API</button>
+          <a href="https://dana-will-be-yours.github.io/da_go/game.html?v=1.9.2-fix2" target="_blank" rel="noopener">開啟 da_go 現行遊戲</a>
+        </div>
+      </section>
+
+      <section id="referencePanel" hidden>
+        <h2>資料參考</h2>
+        <div class="row">
+          <button id="reloadReference" type="button">重新讀取公開參考</button>
+          <button id="loadApiReference" type="button">讀取本機資料庫參考</button>
+        </div>
+        <div id="referenceBox" class="split"></div>
+      </section>
+
+      <section id="passagesPanel" hidden>
+        <h2>場景</h2>
+        <div class="row"><button id="addPassage" type="button">新增場景</button><button id="deletePassage" type="button">刪除目前場景</button></div>
+        <div class="split">
+          <div id="passageList"></div>
+          <div class="card">
+            <h3>場景編輯</h3>
+            <div class="grid">
+              <label>passage_code<input id="pCode"></label>
+              <label>title<input id="pTitle"></label>
+              <label>location<input id="pLocation"></label>
+              <label>time_slot<input id="pTime"></label>
+              <label>sort_order<input id="pSort" type="number" value="100"></label>
+              <label>is_start<select id="pStart"><option value="false">false</option><option value="true">true</option></select></label>
+              <label class="wide">body<textarea id="pBody"></textarea></label>
+              <label class="wide">tags，一行一個<textarea id="pTags"></textarea></label>
+            </div>
+            <button id="savePassage" type="button">保存場景</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="choicesPanel" hidden>
+        <h2>選項</h2>
+        <div class="grid">
+          <label>所屬場景<select id="choicePassage"></select></label>
+          <label>choice_code<input id="cCode"></label>
+          <label>text<input id="cText"></label>
+          <label>target<select id="cTarget"></select></label>
+          <label>function<select id="cFunc"><option>action</option><option>question</option><option>decision</option><option>negotiation</option><option>summary</option><option>training</option></select></label>
+          <label>skill<select id="cSkill"></select></label>
+          <label>DC<select id="cDc"><option value="0">無</option><option value="8">8 簡單</option><option value="10">10 基礎挑戰</option><option value="12">12 標準挑戰</option><option value="14">14 困難</option><option value="16">16 很困難</option><option value="18">18 極難</option><option value="20">20 傳奇級</option></select></label>
+          <label>need flag/input<input id="cNeed"></label>
+          <label>gain flag/item<input id="cGain"></label>
+          <label class="wide">success text<textarea id="cSuccess"></textarea></label>
+          <label class="wide">failure text<textarea id="cFailure"></textarea></label>
+        </div>
+        <button id="saveChoice" type="button">新增選項</button>
+        <div id="choiceList"></div>
+      </section>
+
+      <section id="exportPanel" hidden>
+        <h2>匯出與送出</h2>
+        <div class="row">
+          <button id="buildJson" type="button">產生 JSON</button>
+          <button id="copyJson" type="button">複製</button>
+          <button id="downloadJson" type="button">下載</button>
+          <button id="postJson" type="button">送到本機 API</button>
+        </div>
+        <p id="postStatus" class="status">尚未送出。</p>
+        <pre id="jsonOut"></pre>
+      </section>
+    </main>
+  </div>
+  <script>
+(() => {
+  "use strict";
+  const store = "dagoAuthoringDraftV2";
+  const state = {
+    meta: {story_code: "DAGUO_DC20_OPENING", project_code: "DAGUO", team_code: "DAGUO-T01", session_code: "DX20-NANJING-002"},
+    apiBase: "http://localhost:8787/api",
+    passages: [],
+    current: null,
+    reference: null
+  };
+  const $ = id => document.getElementById(id);
+  const esc = value => String(value ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+  const uid = prefix => prefix + "_" + Math.random().toString(36).slice(2, 8).toUpperCase();
+  const panels = ["meta", "reference", "passages", "choices", "export"];
+
+  document.querySelectorAll("[data-panel]").forEach(button => button.addEventListener("click", () => show(button.dataset.panel)));
+  $("loadSeed").addEventListener("click", loadSeed);
+  $("saveLocal").addEventListener("click", saveLocal);
+  $("loadLocal").addEventListener("click", loadLocal);
+  $("checkApi").addEventListener("click", checkApi);
+  $("reloadReference").addEventListener("click", () => loadReference(false));
+  $("loadApiReference").addEventListener("click", () => loadReference(true));
+  $("addPassage").addEventListener("click", addPassage);
+  $("deletePassage").addEventListener("click", deletePassage);
+  $("savePassage").addEventListener("click", savePassage);
+  $("choicePassage").addEventListener("change", renderChoiceList);
+  $("saveChoice").addEventListener("click", saveChoice);
+  $("buildJson").addEventListener("click", buildJson);
+  $("copyJson").addEventListener("click", () => navigator.clipboard?.writeText(buildJson()));
+  $("downloadJson").addEventListener("click", downloadJson);
+  $("postJson").addEventListener("click", postJson);
+
+  function show(panel) {
+    panels.forEach(name => $(name + "Panel").hidden = name !== panel);
+    if (panel === "reference") renderReference();
+    if (panel === "passages") renderPassages();
+    if (panel === "choices") renderChoices();
+    if (panel === "export") buildJson();
+  }
+
+  function syncMeta() {
+    state.meta = {
+      story_code: $("storyCode").value.trim(),
+      project_code: $("projectCode").value.trim(),
+      team_code: $("teamCode").value.trim(),
+      session_code: $("sessionCode").value.trim()
+    };
+    state.apiBase = $("apiBase").value.trim().replace(/\/+$/, "");
+  }
+
+  function fillMeta() {
+    $("storyCode").value = state.meta.story_code || "";
+    $("projectCode").value = state.meta.project_code || "";
+    $("teamCode").value = state.meta.team_code || "";
+    $("sessionCode").value = state.meta.session_code || "";
+    $("apiBase").value = state.apiBase || "http://localhost:8787/api";
+  }
+
+  function readTags(value) {
+    return String(value || "").split(/\n+/).map(x => x.trim()).filter(Boolean);
+  }
+
+  async function loadReference(fromApi) {
+    syncMeta();
+    const url = fromApi ? state.apiBase + "/authoring-reference" : "dago-authoring-reference.json?v=1.9.3-authoring-pages";
+    try {
+      const response = await fetch(url, {cache: "no-store"});
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      state.reference = await response.json();
+      renderReference();
+    } catch (error) {
+      $("referenceBox").innerHTML = '<p class="status bad">參考資料讀取失敗：' + esc(error.message || error) + "</p>";
+    }
+  }
+
+  async function checkApi() {
+    syncMeta();
+    const box = $("apiStatus");
+    try {
+      const response = await fetch(state.apiBase + "/health", {cache: "no-store"});
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const data = await response.json();
+      box.className = "status ok";
+      box.textContent = "API 可連線：" + data.database;
+    } catch (error) {
+      box.className = "status bad";
+      box.textContent = "API 無法連線：" + (error.message || error);
+    }
+  }
+
+  function renderReference() {
+    const ref = state.reference;
+    if (!ref) {
+      $("referenceBox").innerHTML = '<p class="status">尚未讀取參考資料。</p>';
+      return;
+    }
+    const skillRows = ref.skills || (ref.world || []).filter(row => row.type === "skill").map(row => ({code: row.code, name: row.name, attr: ""}));
+    const locationRows = ref.locations || (ref.rules || []).filter(row => row.type === "location").map(row => ({code: row.code, name: row.name, type: "database"}));
+    const docs = (ref.source_documents || []).map(doc => `<div class="item"><b>${esc(doc.name || doc.file_name || doc.title || doc.source_document_code)}</b><br><span class="muted">${esc(doc.type || "")} / ${esc(doc.story_use || doc.review_status || "")}</span></div>`).join("");
+    const skills = skillRows.map(row => `<span class="pill">${esc(row.name)} ${esc(row.attr || row.code)}</span>`).join("");
+    const locs = locationRows.map(row => `<div class="item"><b>${esc(row.name)}</b><br><span class="muted">${esc(row.code)} / ${esc(row.type)}</span></div>`).join("");
+    const tables = [...(ref.database_reference?.runtime_tables || []), ...(ref.database_reference?.authoring_tables || [])].map(x => `<span class="pill">${esc(x)}</span>`).join("");
+    $("referenceBox").innerHTML = `<div><h3>文本參考資料</h3>${docs}<h3>技能</h3><p>${skills}</p></div><aside class="card"><h3>資料庫內容</h3><p>${tables}</p><h3>南京地點</h3>${locs}</aside>`;
+  }
+
+  function loadSeed() {
+    const seed = state.reference?.story_seed;
+    if (!seed) {
+      loadReference(false).then(loadSeed);
+      return;
+    }
+    state.meta = {
+      story_code: seed.story_code,
+      project_code: seed.project_code,
+      team_code: seed.team_code,
+      session_code: seed.session_code
+    };
+    state.passages = JSON.parse(JSON.stringify(seed.passages || []));
+    state.current = state.passages[0]?.passage_code || null;
+    fillMeta();
+    renderPassages();
+    renderChoices();
+    show("passages");
+  }
+
+  function addPassage() {
+    const code = uid("P");
+    state.passages.push({
+      passage_code: code,
+      title: "新場景",
+      location: "",
+      time_slot: "",
+      body: "",
+      tags: ["researcher"],
+      is_start: state.passages.length === 0,
+      sort_order: (state.passages.length + 1) * 100,
+      choices: []
+    });
+    editPassage(code);
+    renderPassages();
+    renderChoices();
+  }
+
+  function deletePassage() {
+    if (!state.current) return;
+    state.passages = state.passages.filter(p => p.passage_code !== state.current);
+    state.current = state.passages[0]?.passage_code || null;
+    renderPassages();
+    renderChoices();
+  }
+
+  function savePassage() {
+    let passage = state.passages.find(p => p.passage_code === state.current);
+    if (!passage) {
+      addPassage();
+      passage = state.passages.find(p => p.passage_code === state.current);
+    }
+    const oldCode = passage.passage_code;
+    passage.passage_code = $("pCode").value.trim() || oldCode;
+    passage.title = $("pTitle").value.trim() || "未命名場景";
+    passage.location = $("pLocation").value.trim();
+    passage.time_slot = $("pTime").value.trim();
+    passage.sort_order = Number($("pSort").value) || 100;
+    passage.is_start = $("pStart").value === "true";
+    passage.body = $("pBody").value.trim();
+    passage.tags = readTags($("pTags").value);
+    state.passages.forEach(p => {
+      (p.choices || []).forEach(choice => {
+        if (choice.target === oldCode) choice.target = passage.passage_code;
+      });
+    });
+    state.current = passage.passage_code;
+    renderPassages();
+    renderChoices();
+  }
+
+  function editPassage(code) {
+    const passage = state.passages.find(p => p.passage_code === code);
+    if (!passage) return;
+    state.current = code;
+    $("pCode").value = passage.passage_code || "";
+    $("pTitle").value = passage.title || "";
+    $("pLocation").value = passage.location || "";
+    $("pTime").value = passage.time_slot || "";
+    $("pSort").value = passage.sort_order || 100;
+    $("pStart").value = String(!!passage.is_start);
+    $("pBody").value = passage.body || "";
+    $("pTags").value = (passage.tags || []).join("\n");
+  }
+
+  function renderPassages() {
+    const list = $("passageList");
+    list.innerHTML = state.passages.slice().sort((a,b) => (a.sort_order || 0) - (b.sort_order || 0)).map(p => `<div class="item"><b>${esc(p.title)}</b><br><span class="muted">${esc(p.passage_code)} / ${esc(p.location || "")}</span><br><button type="button" data-edit="${esc(p.passage_code)}">編輯</button></div>`).join("");
+    list.querySelectorAll("[data-edit]").forEach(button => button.addEventListener("click", () => editPassage(button.dataset.edit)));
+    if (state.current) editPassage(state.current);
+  }
+
+  function passageOptions(includeBlank) {
+    const options = state.passages.map(p => `<option value="${esc(p.passage_code)}">${esc(p.title)} (${esc(p.passage_code)})</option>`).join("");
+    return includeBlank ? '<option value="">無</option>' + options : options;
+  }
+
+  function renderChoices() {
+    const skillRows = state.reference?.skills || (state.reference?.world || []).filter(row => row.type === "skill").map(row => ({code: row.code, name: row.name}));
+    const skillOptions = ['<option value="">無</option>'].concat(skillRows.map(s => `<option value="${esc(s.code)}">${esc(s.name)} (${esc(s.code)})</option>`));
+    $("cSkill").innerHTML = skillOptions.join("");
+    $("choicePassage").innerHTML = passageOptions(false);
+    $("cTarget").innerHTML = passageOptions(true);
+    if (state.current) $("choicePassage").value = state.current;
+    renderChoiceList();
+  }
+
+  function saveChoice() {
+    const passage = state.passages.find(p => p.passage_code === $("choicePassage").value);
+    if (!passage) return;
+    const skill = $("cSkill").value;
+    const need = $("cNeed").value.trim();
+    const gain = $("cGain").value.trim();
+    passage.choices = passage.choices || [];
+    passage.choices.push({
+      id: $("cCode").value.trim() || uid("C"),
+      text: $("cText").value.trim() || "未命名選項",
+      target: $("cTarget").value || null,
+      utterance_function: $("cFunc").value,
+      check: skill ? {skill, dc: Number($("cDc").value) || 8} : null,
+      conditions: need ? [{op: "has", path: "flags", value: need}] : [],
+      effects: gain ? [{op: "gain", value: gain}] : [],
+      success_text: $("cSuccess").value.trim(),
+      failure_text: $("cFailure").value.trim(),
+      sort_order: (passage.choices.length + 1) * 100
+    });
+    ["cCode","cText","cNeed","cGain","cSuccess","cFailure"].forEach(id => $(id).value = "");
+    renderChoiceList();
+  }
+
+  function renderChoiceList() {
+    const passage = state.passages.find(p => p.passage_code === $("choicePassage").value);
+    $("choiceList").innerHTML = passage ? (passage.choices || []).map((choice, index) => `<div class="item"><b>${esc(choice.text)}</b><br><span class="muted">${esc(choice.id)} -> ${esc(choice.target || "")}</span><br><button type="button" data-remove-choice="${index}">刪除</button></div>`).join("") : "";
+    $("choiceList").querySelectorAll("[data-remove-choice]").forEach(button => button.addEventListener("click", () => {
+      passage.choices.splice(Number(button.dataset.removeChoice), 1);
+      renderChoiceList();
+    }));
+  }
+
+  function exportObject() {
+    syncMeta();
+    return {
+      metadata: Object.assign({}, state.meta, {
+        export_format: "da_go_researcher_story_json_v1",
+        target_database: "TRPG_Corpus_DB",
+        exported_at: new Date().toISOString()
+      }),
+      passages: state.passages
+    };
+  }
+
+  function buildJson() {
+    const text = JSON.stringify(exportObject(), null, 2);
+    $("jsonOut").textContent = text;
+    return text;
+  }
+
+  function downloadJson() {
+    const blob = new Blob([buildJson()], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = (state.meta.story_code || "dago_story") + ".json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function postJson() {
+    syncMeta();
+    const status = $("postStatus");
+    try {
+      const response = await fetch(state.apiBase + "/researcher-stories", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({story_code: state.meta.story_code, auto_load: true, story_json: exportObject()})
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || ("HTTP " + response.status));
+      status.className = "status ok";
+      status.textContent = "已送出：" + data.story_code + " / " + (data.validation?.validation_status || "unknown");
+    } catch (error) {
+      status.className = "status bad";
+      status.textContent = "送出失敗：" + (error.message || error);
+    }
+  }
+
+  function saveLocal() {
+    syncMeta();
+    localStorage.setItem(store, JSON.stringify(state));
+  }
+
+  function loadLocal() {
+    const raw = localStorage.getItem(store);
+    if (!raw) return;
+    const next = JSON.parse(raw);
+    Object.assign(state, next);
+    fillMeta();
+    renderPassages();
+    renderChoices();
+  }
+
+  fillMeta();
+  loadReference(false);
+  show("meta");
+})();
+  </script>
+</body>
+</html>

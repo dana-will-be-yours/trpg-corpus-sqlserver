@@ -220,6 +220,92 @@ function Invoke-RuntimeBundle {
     }
 }
 
+function Invoke-AuthoringReference {
+    $connection = New-DbConnection
+    try {
+        $connection.Open()
+        $command = $connection.CreateCommand()
+        $command.CommandText = @"
+SELECT
+    rule_type,
+    code,
+    display_name,
+    rule_json,
+    sort_order
+FROM dbo.vw_DaGo_Nanjing_V5_Authoring_Rules
+ORDER BY rule_type, sort_order, code;
+
+SELECT
+    row_type,
+    code,
+    display_name,
+    payload_json,
+    sort_order
+FROM dbo.vw_DaGo_Nanjing_V5_World_Bundle_Rows
+ORDER BY row_type, sort_order, code;
+
+SELECT TOP (100)
+    source_document_code,
+    source_title,
+    source_document_type,
+    file_name,
+    import_status
+FROM stg.Source_Document_Import
+ORDER BY created_at DESC, source_document_import_id DESC;
+"@
+        $reader = $command.ExecuteReader()
+        $rules = @()
+        while ($reader.Read()) {
+            $rules += @{
+                type = [string]$reader["rule_type"]
+                code = [string]$reader["code"]
+                name = [string]$reader["display_name"]
+                json = [string]$reader["rule_json"]
+                sort_order = [int]$reader["sort_order"]
+            }
+        }
+
+        [void]$reader.NextResult()
+        $world = @()
+        while ($reader.Read()) {
+            $world += @{
+                type = [string]$reader["row_type"]
+                code = [string]$reader["code"]
+                name = [string]$reader["display_name"]
+                json = [string]$reader["payload_json"]
+                sort_order = [int]$reader["sort_order"]
+            }
+        }
+
+        [void]$reader.NextResult()
+        $documents = @()
+        while ($reader.Read()) {
+            $documents += @{
+                source_document_code = [string]$reader["source_document_code"]
+                title = [string]$reader["source_title"]
+                type = [string]$reader["source_document_type"]
+                file_name = [string]$reader["file_name"]
+                review_status = [string]$reader["import_status"]
+            }
+        }
+        $reader.Dispose()
+
+        return @{
+            metadata = @{
+                reference_format = "dago_authoring_reference_from_sql_v1"
+                target_database = $Database
+                exported_at = (Get-Date).ToString("o")
+            }
+            rules = $rules
+            world = $world
+            source_documents = $documents
+        }
+    }
+    finally {
+        $connection.Dispose()
+    }
+}
+
 function Invoke-SavePlayLog {
     param([object]$Payload)
 
@@ -383,17 +469,20 @@ function Invoke-SaveResearcherStory {
     $projectCode = Get-FirstTextValue @(
         (Get-JsonProperty -Object $Payload -Name "project_code"),
         (Get-JsonProperty -Object $metadata -Name "project_code"),
-        (Get-JsonProperty -Object $config -Name "project_code")
+        (Get-JsonProperty -Object $config -Name "project_code"),
+        (Get-JsonProperty -Object $story -Name "project_code")
     )
     $teamCode = Get-FirstTextValue @(
         (Get-JsonProperty -Object $Payload -Name "team_code"),
         (Get-JsonProperty -Object $metadata -Name "team_code"),
-        (Get-JsonProperty -Object $config -Name "team_code")
+        (Get-JsonProperty -Object $config -Name "team_code"),
+        (Get-JsonProperty -Object $story -Name "team_code")
     )
     $sessionCode = Get-FirstTextValue @(
         (Get-JsonProperty -Object $Payload -Name "session_code"),
         (Get-JsonProperty -Object $metadata -Name "session_code"),
-        (Get-JsonProperty -Object $config -Name "session_code")
+        (Get-JsonProperty -Object $config -Name "session_code"),
+        (Get-JsonProperty -Object $story -Name "session_code")
     )
     $autoLoad = Convert-ToBooleanValue -Value (Get-FirstTextValue @(
         (Get-JsonProperty -Object $Payload -Name "auto_load"),
@@ -599,6 +688,12 @@ while ($listener.IsListening) {
             $query = ConvertFrom-QueryString -Query $request.Url.Query
             $json = Invoke-RuntimeBundle -ProjectCode $query["project_code"] -TeamCode $query["team_code"] -SessionCode $query["session_code"]
             Write-JsonResponse -Response $response -StatusCode 200 -Json $json
+            continue
+        }
+
+        if ($request.HttpMethod -eq "GET" -and $segments.Length -eq 2 -and $segments[0] -eq "api" -and $segments[1] -eq "authoring-reference") {
+            $result = Invoke-AuthoringReference
+            Write-ObjectResponse -Response $response -StatusCode 200 -Object $result
             continue
         }
 
