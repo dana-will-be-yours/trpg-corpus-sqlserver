@@ -17,7 +17,7 @@ DECLARE @session_id INT;
 MERGE dbo.Research_Project AS target
 USING (VALUES
 (
-    N'DAGUO',
+    N'DAGO',
     N'大國年代記 da_go 劇情資料',
     N'DaGo TRPG corpus playable story data',
     N'TRPG 團錄、互文性、跨媒介敘事、SQL資料庫與 da_go 單人文字遊戲資料往返',
@@ -44,7 +44,9 @@ USING (VALUES
     project_version
 )
 ON target.project_code = source.project_code
+   OR (target.project_title = source.project_title AND target.project_version = source.project_version)
 WHEN MATCHED THEN UPDATE SET
+    project_code = source.project_code,
     project_title = source.project_title,
     project_title_en = source.project_title_en,
     research_topic = source.research_topic,
@@ -86,15 +88,16 @@ VALUES
 
 SELECT @project_id = project_id
 FROM dbo.Research_Project
-WHERE project_code = N'DAGUO';
+WHERE project_code = N'DAGO'
+   OR (project_title = N'大國年代記 da_go 劇情資料' AND project_version = N'v1');
 
 MERGE dbo.Team AS target
 USING (VALUES
 (
     @project_id,
-    N'DAGUO-T01',
-    N'da_go 南京篇研究者測試隊',
-    N'DAGUO-PUBLIC',
+    N'DAGO-T01',
+    N'da_go 小城舊事研究者測試隊',
+    N'DAGO-PUBLIC',
     1,
     CONVERT(BIT, 1),
     CONVERT(BIT, 1),
@@ -167,7 +170,7 @@ VALUES
 SELECT @team_id = team_id
 FROM dbo.Team
 WHERE project_id = @project_id
-  AND team_code = N'DAGUO-T01';
+  AND team_code = N'DAGO-T01';
 
 MERGE dbo.Player AS target
 USING (VALUES
@@ -268,15 +271,15 @@ MERGE dbo.TRPG_Session AS target
 USING (VALUES
 (
     @team_id,
-    N'DX20-NANJING-002',
+    N'DC10-XIAOCHENG-001',
     1,
-    N'da_go 南京篇公開測試',
+    N'da_go 小城舊事公開測試',
     N'play',
     CONVERT(DATE, '2026-05-09'),
     N'online',
     N'GitHub Pages / local API',
     N'用於 da_go runtime bundle 與研究者劇情匯入。',
-    N'南京開局，涵蓋南陽、崑崙、銀川、五毒與雙孤線索。',
+    N'常山縣本地人開局，涵蓋天津郡、常山縣、衡水縣、珩灣縣與滄北邑線索。',
     @gm_member_id,
     @researcher_member_id,
     N'in_progress'
@@ -298,8 +301,9 @@ USING (VALUES
     session_status
 )
 ON target.team_id = source.team_id
-   AND target.session_code = source.session_code
+   AND (target.session_code = source.session_code OR target.session_no = source.session_no)
 WHEN MATCHED THEN UPDATE SET
+    session_code = source.session_code,
     session_title = source.session_title,
     session_type = source.session_type,
     session_date = source.session_date,
@@ -356,7 +360,7 @@ VALUES
 SELECT @session_id = session_id
 FROM dbo.TRPG_Session
 WHERE team_id = @team_id
-  AND session_code = N'DX20-NANJING-002';
+  AND session_code = N'DC10-XIAOCHENG-001';
 
 DECLARE @passages TABLE
 (
@@ -382,10 +386,10 @@ INSERT INTO @passages
     sort_order
 )
 VALUES
-(N'NANJING_GATE_REFERENCE', N'南京外城', N'大興二十年的南京，城門口的驛馬、茶棚、南市帳房與官署差役把南陽、崑崙、銀川與五毒的消息帶到同一條街上。', N'南京外城', N'卯時', N'["南京","開局","大國年代記"]', 1, 100),
-(N'TEA_REFERENCE', N'城門茶棚', N'茶博士收起抹布。旁桌商旅說起江郡北虎商會、南陽商銀與江夏糧船，也有人低聲提到崑崙受襲。', N'南京茶棚', N'辰時', N'["茶棚","情報","南陽","崑崙"]', 0, 200),
-(N'YAMEN_REFERENCE', N'官署門廊', N'老書吏不願多談北路，只說魏無紛在銀川，魏無忌在朝中。名字若落到錯的人手裡，後患會很快追上來。', N'南京官署', N'巳時', N'["官署","銀川","魏氏"]', 0, 300),
-(N'LEDGER_REFERENCE', N'南市帳房', N'算籌壓著一張改過數次的借據。南合商會的名號反覆出現，收貨與付款卻分開走。', N'南京南市', N'午時', N'["南市","帳目","南陽"]', 0, 400);
+(N'GATE_REFERENCE', N'常山縣東門', N'大興十年正月，常山縣東門外還有薄霜。玩家是本地人，知道客棧、市集、縣衙與河埠各有活計與消息。', N'天津郡 常山縣東門', N'卯時', N'["常山縣","開局","小城舊事"]', 1, 100),
+(N'MAP_REFERENCE', N'天津郡路線', N'小圖標出天津郡、常山縣、衡水縣、珩灣縣與滄北邑。常山縣是主要活動地點，縣外消息由商旅、文移與口述進入。', N'天津郡 路線圖', N'辰時', N'["天津郡","衡水縣","珩灣縣","滄北邑"]', 0, 200),
+(N'YAMEN_REFERENCE', N'常山縣衙', N'縣衙門廊潮氣重，書吏唐簡收著戶籍與舊案。常山縣的糧務、水路與人情多會在案牘裡留下影子。', N'天津郡 常山縣 縣衙', N'巳時', N'["官署","戶籍","舊案"]', 0, 300),
+(N'LODGING_REFERENCE', N'橋北租屋', N'橋北租屋只有一張窄榻、一盞油燈與幾件行囊。此處記錄休息、存檔點與修習入口。', N'天津郡 常山縣 橋北租屋', N'午時', N'["住處","休息","修習"]', 0, 400);
 
 MERGE dbo.Game_Passage AS target
 USING @passages AS source
@@ -475,20 +479,20 @@ SELECT
 FROM
 (
     VALUES
-    (N'NANJING_GATE_REFERENCE', N'TO_TEA', N'去茶棚聽南來商旅說話', N'TEA_REFERENCE', N'question', NULL, N'[{"op":"add","path":"stats.fatigue","value":1}]', N'{"skill":"listen","dc":8}', 100),
-    (N'NANJING_GATE_REFERENCE', N'TO_YAMEN', N'到官署問北路急信', N'YAMEN_REFERENCE', N'question', NULL, N'[{"op":"add","path":"stats.suspicion","value":1}]', N'{"skill":"office","dc":10}', 200),
-    (N'TEA_REFERENCE', N'ASK_SOUTH', N'請茶博士說清南陽商銀異動', N'LEDGER_REFERENCE', N'question', NULL, N'[{"op":"gain","value":"南陽帳目疑點"}]', N'{"skill":"speech","dc":10}', 100),
-    (N'YAMEN_REFERENCE', N'CHECK_DOSSIER', N'查魏無忌近年任官', N'NANJING_GATE_REFERENCE', N'action', NULL, N'[{"op":"gain","value":"魏無忌任官摘記"}]', N'{"skill":"office","dc":12}', 100),
-    (N'LEDGER_REFERENCE', N'BACK_GATE', N'把帳目疑點記入札記後回南京外城', N'NANJING_GATE_REFERENCE', N'summary', NULL, N'[{"op":"gain","value":"帳目來源"}]', NULL, 100)
+    (N'GATE_REFERENCE', N'TO_MAP', N'查看天津郡路線', N'MAP_REFERENCE', N'action', NULL, N'[{"op":"add","path":"stats.fatigue","value":1}]', N'{"skill":"geo","dc":8}', 100),
+    (N'GATE_REFERENCE', N'TO_YAMEN', N'到縣衙問舊案與活計', N'YAMEN_REFERENCE', N'question', NULL, N'[{"op":"add","path":"stats.suspicion","value":1}]', N'{"skill":"office","dc":10}', 200),
+    (N'MAP_REFERENCE', N'ASK_COUNTIES', N'標下衡水縣、珩灣縣與滄北邑', N'GATE_REFERENCE', N'summary', NULL, N'[{"op":"gain","value":"天津郡路線"}]', N'{"skill":"geo","dc":8}', 100),
+    (N'YAMEN_REFERENCE', N'CHECK_RECORD', N'查常山縣近年戶籍舊案', N'LODGING_REFERENCE', N'action', NULL, N'[{"op":"gain","value":"空屋戶籍線索"}]', N'{"skill":"office","dc":12}', 100),
+    (N'LODGING_REFERENCE', N'BACK_GATE', N'整理札記後回東門', N'GATE_REFERENCE', N'summary', NULL, N'[{"op":"gain","value":"常山生活札記"}]', NULL, 100)
 ) AS source(passage_code, choice_code, choice_text, next_passage_code, utterance_function, condition_json, effect_json, skill_check_json, sort_order)
 INNER JOIN dbo.Game_Passage AS gp
     ON gp.team_id = @team_id
    AND gp.passage_code = source.passage_code;
 
 SELECT
-    N'DAGUO' AS project_code,
-    N'DAGUO-T01' AS team_code,
-    N'DX20-NANJING-002' AS session_code,
+    N'DAGO' AS project_code,
+    N'DAGO-T01' AS team_code,
+    N'DC10-XIAOCHENG-001' AS session_code,
     (SELECT COUNT(*) FROM @passages) AS passage_count,
     5 AS choice_count;
 GO

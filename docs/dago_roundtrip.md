@@ -48,13 +48,13 @@ powershell -ExecutionPolicy Bypass -File .\tools\dago_corpus_api.ps1 -Prefix "ht
 讀取 manifest：
 
 ```text
-GET http://localhost:8787/api/world-manifest?project_code=DAGUO&team_code=DAGUO-T01&session_code=DA20-CORPUS-RPG-001
+GET http://localhost:8787/api/world-manifest?project_code=DAGO&team_code=DAGO-T01&session_code=DA20-CORPUS-RPG-001
 ```
 
 讀取 runtime bundle：
 
 ```text
-GET http://localhost:8787/api/runtime-bundle?project_code=DAGUO&team_code=DAGUO-T01&session_code=DA20-CORPUS-RPG-001
+GET http://localhost:8787/api/runtime-bundle?project_code=DAGO&team_code=DAGO-T01&session_code=DA20-CORPUS-RPG-001
 ```
 
 提交 playlog：

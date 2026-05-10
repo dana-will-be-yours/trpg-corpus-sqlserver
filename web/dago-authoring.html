@@ -55,16 +55,16 @@
       <section id="metaPanel">
         <h2>專案設定</h2>
         <div class="grid">
-          <label>story_code<input id="storyCode" value="DAGUO_DX10_CHANGSHAN_YEAR"></label>
-          <label>project_code<input id="projectCode" value="DAGUO"></label>
-          <label>team_code<input id="teamCode" value="DAGUO-T01"></label>
-          <label>session_code<input id="sessionCode" value="DX10-CHANGSHAN-001"></label>
+          <label>story_code<input id="storyCode" value="DAGO_DC10_XIAOCHENG_JIUSHI"></label>
+          <label>project_code<input id="projectCode" value="DAGO"></label>
+          <label>team_code<input id="teamCode" value="DAGO-T01"></label>
+          <label>session_code<input id="sessionCode" value="DC10-XIAOCHENG-001"></label>
           <label>本機 API URL<input id="apiBase" value="http://localhost:8787/api"></label>
         </div>
         <p id="apiStatus" class="status">尚未檢查 API。</p>
         <div class="row">
           <button id="checkApi" type="button">檢查 API</button>
-          <a href="https://dana-will-be-yours.github.io/da_go/game.html?v=1.11.0-changshan-year" target="_blank" rel="noopener">開啟 da_go 現行遊戲</a>
+          <a href="https://dana-will-be-yours.github.io/da_go/game.html?v=1.11.1-xiaocheng-local" target="_blank" rel="noopener">開啟 da_go 現行遊戲</a>
         </div>
       </section>
 
@@ -136,7 +136,7 @@
   "use strict";
   const store = "dagoAuthoringDraftV2";
   const state = {
-    meta: {story_code: "DAGUO_DX10_CHANGSHAN_YEAR", project_code: "DAGUO", team_code: "DAGUO-T01", session_code: "DX10-CHANGSHAN-001"},
+    meta: {story_code: "DAGO_DC10_XIAOCHENG_JIUSHI", project_code: "DAGO", team_code: "DAGO-T01", session_code: "DC10-XIAOCHENG-001"},
     apiBase: "http://localhost:8787/api",
     passages: [],
     current: null,
@@ -196,7 +196,7 @@
 
   async function loadReference(fromApi) {
     syncMeta();
-    const url = fromApi ? state.apiBase + "/authoring-reference" : "dago-authoring-reference.json?v=1.11.0-changshan-year";
+    const url = fromApi ? state.apiBase + "/authoring-reference" : "dago-authoring-reference.json?v=1.11.1-xiaocheng-local";
     try {
       const response = await fetch(url, {cache: "no-store"});
       if (!response.ok) throw new Error("HTTP " + response.status);

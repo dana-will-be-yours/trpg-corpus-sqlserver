@@ -2,11 +2,12 @@
   "metadata": {
     "reference_format": "dago_authoring_reference_v1",
     "repo": "trpg-corpus-sqlserver",
-    "game_url": "https://dana-will-be-yours.github.io/da_go/game.html?v=1.11.0-changshan-year",
+    "game_url": "https://dana-will-be-yours.github.io/da_go/game.html?v=1.11.1-xiaocheng-local",
     "local_api": "http://localhost:8787/api",
     "target_database": "TRPG_Corpus_DB",
     "target_import_table": "stg.DaGo_Researcher_Story_Import",
-    "scenario_code": "changshan_year",
+    "scenario_code": "xiaocheng_jiushi",
+    "scenario_name": "小城舊事",
     "scenario_time": "大興十年",
     "scenario_place": "天津郡 常山縣"
   },
@@ -59,6 +60,7 @@
     {"code": "speech", "name": "口才", "attr": "mind"}
   ],
   "locations": [
+    {"code": "Tianjin", "name": "天津郡郡城", "type": "prefecture", "note": "郡城掌文移、倉運與差役調度。"},
     {"code": "Gate", "name": "常山縣東門", "type": "city_gate"},
     {"code": "WorkBoard", "name": "活計牌", "type": "job_board"},
     {"code": "Inn", "name": "客棧", "type": "lodging"},
@@ -71,7 +73,10 @@
     {"code": "Field", "name": "田埂", "type": "field"},
     {"code": "Clinic", "name": "醫鋪", "type": "clinic"},
     {"code": "Shrine", "name": "城隍廟", "type": "shrine"},
-    {"code": "Lodging", "name": "借住小院", "type": "save_point"}
+    {"code": "Lodging", "name": "借住小院", "type": "save_point"},
+    {"code": "Hengshui", "name": "衡水縣", "type": "county", "note": "常山以西，田地與水渠消息來源。"},
+    {"code": "Hengwan", "name": "珩灣縣", "type": "county", "note": "靠水路，船家、鹽貨與商旅消息較多。"},
+    {"code": "Cangbei", "name": "滄北邑", "type": "town", "parent": "珩灣縣", "note": "北面商旅與北家舊識相關地。"}
   ],
   "npcs": [
     {"code": "npc_liang_san", "name": "梁三", "location": "Inn", "role": "客棧跑堂"},
@@ -86,17 +91,17 @@
     {"code": "npc_shen_bu", "name": "沈簿", "location": "Yamen", "role": "簿書"}
   ],
   "story_seed": {
-    "story_code": "DAGUO_DX10_CHANGSHAN_YEAR",
-    "project_code": "DAGUO",
-    "team_code": "DAGUO-T01",
-    "session_code": "DX10-CHANGSHAN-001",
+    "story_code": "DAGO_DC10_XIAOCHENG_JIUSHI",
+    "project_code": "DAGO",
+    "team_code": "DAGO-T01",
+    "session_code": "DC10-XIAOCHENG-001",
     "passages": [
       {
         "passage_code": "Gate",
         "title": "常山縣東門",
         "location": "天津郡 常山縣 東門",
         "time_slot": "卯時",
-        "body": "大興十年正月，常山縣東門外還有薄霜。縣城內有客棧、市集、縣衙與河埠，活計牌旁擠著等工的人。",
+        "body": "大興十年正月，常山縣東門外還有薄霜。你是本地人，知道縣城內有客棧、市集、縣衙與河埠，活計牌旁擠著等工的人。",
         "tags": ["常山縣", "開局", "大國年代記"],
         "is_start": true,
         "sort_order": 100,

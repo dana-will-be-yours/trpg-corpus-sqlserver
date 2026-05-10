@@ -389,8 +389,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("inputs", nargs="+", type=Path)
     parser.add_argument("--out-dir", type=Path, default=Path("exports/source_documents"))
-    parser.add_argument("--project-code", default="DAGUO")
-    parser.add_argument("--team-code", default="DAGUO-T01")
+    parser.add_argument("--project-code", default="DAGO")
+    parser.add_argument("--team-code", default="DAGO-T01")
     parser.add_argument("--session-code", default=None)
     parser.add_argument(
         "--source-document-type",

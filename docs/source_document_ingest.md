@@ -51,8 +51,8 @@
 python .\tools\extract_source_document.py `
   ".\TRPG遊戲團錄範例\團錄參考(劇本雙孤－PC陽月).docx" `
   --out-dir ".\exports\source_documents" `
-  --project-code "DAGUO" `
-  --team-code "DAGUO-T01" `
+  --project-code "DAGO" `
+  --team-code "DAGO-T01" `
   --session-code "DA20-SHUANGGU-YANGYUE"
 ```
 
@@ -70,9 +70,9 @@ EXEC stg.usp_Load_Source_Document_Json
 ```sql
 EXEC stg.usp_Build_Utterance_Import_From_Source_Text_Block
     @source_document_code = N'SRC-example',
-    @batch_code = N'DAGUO_TRANSCRIPT_001',
-    @project_code = N'DAGUO',
-    @team_code = N'DAGUO-T01',
+    @batch_code = N'DAGO_TRANSCRIPT_001',
+    @project_code = N'DAGO',
+    @team_code = N'DAGO-T01',
     @session_code = N'DA20-SHUANGGU-YANGYUE',
     @default_scene_code = N'SCN-REVIEW-001',
     @only_reviewed = 1;
