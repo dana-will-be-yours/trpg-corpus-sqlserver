@@ -1,4 +1,4 @@
-# da_go corpus input v7 使用手冊
+# da_go corpus input v8 使用手冊
 
 版本記錄：
 
@@ -6,20 +6,22 @@
 2026-05-12 json-xlsx-v5-mapping
 2026-05-12 json-xlsx-v6-edit-stable
 2026-05-12 json-xlsx-v7-row-delete-responsive
+2026-05-12 json-xlsx-v8-field-notes
 ```
 
-本手冊以 v7 作為後續維護基準。v7 只修改前端互動與版面，不修改 `database/*.sql`，不修改 JSON 欄位，不修改 XLSX 工作表結構，不修改 staging 到正式表的 SQL 流程。
+本手冊以 v8 作為後續維護基準。v8 新增「來源與批次」欄位說明筆記，讓使用者可直接查詢 stg.Utterance_Import、dbo.Utterance 與 function 代碼意思。v8 不修改 `database/*.sql`，不修改 JSON 欄位，不修改 XLSX 工作表結構，不修改 staging 到正式表的 SQL 流程。
 
 公開頁：
 
 ```text
-https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/web/dago-corpus-input.html?v=20260512-v7-row-delete-responsive
+https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/web/dago-corpus-input.html?v=20260512-v8-field-notes
 ```
 
 主分支檔案：
 
 ```text
 web/dago-corpus-input.html
+web/assets/dago-corpus-input-v8.js
 web/assets/dago-corpus-input-v7.js
 web/assets/dago-corpus-input-v6.js
 web/assets/dago-corpus-input-v5.js
@@ -49,41 +51,74 @@ HTML 貼上逐字稿
 
 此頁不直接連線 SQL Server，不保存資料庫帳密，不在 GitHub Pages 中寫入資料庫。
 
-## 二、v7 修改內容
+## 二、v8 修改內容
 
-v7 修改項目：
-
-```text
-1. Speaker Mapping 可刪除單列。
-2. stg.Utterance_Import 預覽可刪除單列。
-3. 前端驗證按鈕移到 stg.Utterance_Import 預覽標題下方。
-4. 桌機寬螢幕可使用更多水平空間。
-5. 筆電或窄螢幕會自動改為單欄。
-6. 表格自身水平捲動，不讓整個頁面難以操作。
-7. JSON/XLSX 欄位結構與 SQL 流程維持既有設計不變。
-```
-
-新增或調整的主要函式：
+v8 修改項目：
 
 ```text
-renumberRows()
-deleteRow(index)
-deleteMapping(index)
-renderRows() 新增操作欄與刪除按鈕
-renderMappings() 新增操作欄與刪除按鈕
+1. 在「來源與批次」欄新增可收合欄位說明筆記。
+2. 筆記說明 stg.Utterance_Import 與 dbo.Utterance 的基本對應。
+3. 筆記說明 project_code、team_code、session_code、batch_code、scene_code、speaker_code、start_timecode 與三層文本。
+4. 筆記說明 speaker_type 的正式對應邏輯。
+5. 筆記提供 utterance_function 的代碼、中文名稱與用途。
+6. JSON/XLSX 欄位結構與 SQL 流程維持既有設計不變。
 ```
 
-刪除逐字稿列後，前端會重新編號：
+v8 的 `metadata.export_format` 為：
 
 ```text
-source_row_no
-turn_no_text
-utterance_code
+trpg_corpus_web_input_json_xlsx_v8_field_notes
 ```
 
-刪除 Speaker Mapping 後，不會自動刪除逐字稿列。若要讓 mapping 變更套用到逐字稿列，請按「套用 Speaker Mapping」。
+## 三、來源與批次欄位筆記
 
-## 三、輸入格式
+v8 在「來源與批次」加入：
+
+```text
+欄位說明筆記：stg.Utterance_Import / dbo.Utterance
+```
+
+此筆記使用 HTML 原生 `details` / `summary`，可展開或收合。用途是讓研究者或玩家在同一頁面查詢欄位含義，不必另開手冊。
+
+主要說明：
+
+```text
+stg.Utterance_Import 是暫存匯入表。
+dbo.Utterance 是正式逐字稿核心表，一列代表一個 turn。
+turn_no_text 會轉成 dbo.Utterance.turn_no。
+speaker_code 會依 speaker_type 轉成正式外鍵。
+utterance_text_raw、utterance_text_clean、utterance_text_verified 會三層保留。
+```
+
+## 四、function 代碼對照
+
+| function 代碼 | 中文名稱 | 用途 |
+|---|---|---|
+| narration | 旁白 | GM 描述場景、環境、事件、NPC 狀態。 |
+| dialogue | 對話 | 角色內對話或一般交談。 |
+| action | 行動宣告 | 玩家宣告角色要做什麼。 |
+| rule_check | 規則檢定 | 擲骰、技能檢定、規則確認、成功失敗判定。 |
+| decision | 決策 | 個人或團隊做出明確選擇。 |
+| negotiation | 協商 | 玩家討論方案、分配任務、協調敘事方向。 |
+| question | 提問 | 詢問規則、世界觀、場景資訊、角色意圖。 |
+| clarification | 澄清 | 補充、確認、修正前一段資訊。 |
+| conflict | 衝突 | 立場不一致、反對、爭執或敘事衝突。 |
+| summary | 摘要 | 回顧事件、整理資訊、階段性總結。 |
+
+## 五、speaker_type 對應
+
+| speaker_type | 中文名稱 | 正式表對應 |
+|---|---|---|
+| GM | 主持人 | dbo.Team_Member.member_code |
+| PL | 角色外玩家 | dbo.Team_Member.member_code |
+| PC | 玩家角色 | dbo.Player_Character.character_code |
+| NPC | 非玩家角色 | dbo.NPC.npc_code |
+| Observer | 觀察者 | dbo.Team_Member.member_code |
+| Researcher | 研究者 | dbo.Team_Member.member_code |
+
+前端自動產生的 `PC-陽月`、`TM-GM` 只作為暫時值。匯入正式表前，必須改成 SQL Server 已存在的正式 code。否則 `stg.usp_Validate_Utterance_Import` 會產生 error。
+
+## 六、輸入格式
 
 建議每列一個發言。支援時間碼：
 
@@ -118,7 +153,7 @@ frontend_validation_error
 frontend_validation_warning
 ```
 
-## 四、Speaker Mapping
+## 七、Speaker Mapping
 
 `Speaker Mapping` 區用來把逐字稿中的原始說話者名稱，對應到 SQL Server 正式表可辨識的 code。
 
@@ -133,19 +168,11 @@ target_table       目標表，例如 dbo.Team_Member、dbo.Player_Character、d
 note               備註
 ```
 
-正式對應規則：
+刪除 Speaker Mapping 後，不會自動刪除逐字稿列。若要讓 mapping 變更套用到逐字稿列，請按「套用 Speaker Mapping」。
 
-```text
-GM / PL / Observer / Researcher → dbo.Team_Member.member_code
-PC                              → dbo.Player_Character.character_code
-NPC                             → dbo.NPC.npc_code
-```
+## 八、stg.Utterance_Import 預覽
 
-前端自動產生的 `PC-陽月`、`TM-GM` 只作為暫時值。匯入正式表前，必須改成 SQL Server 已存在的正式 code。否則 `stg.usp_Validate_Utterance_Import` 會產生 error。
-
-## 五、stg.Utterance_Import 預覽
-
-v7 預覽表新增 `操作` 欄，可刪除單列。刪除單列時會跳出確認視窗。確認後該列不會匯出 JSON/XLSX。
+預覽表含 `操作` 欄，可刪除單列。刪除單列時會跳出確認視窗。確認後該列不會匯出 JSON/XLSX。
 
 欄位：
 
@@ -165,9 +192,9 @@ frontend_warning
 
 若只是要排除分析，建議後續新增 `include_in_analysis_text` 與 `exclusion_reason` 的 UI。現階段按「刪除」表示該 turn 不進匯出檔。
 
-## 六、前端驗證
+## 九、前端驗證
 
-v7 的「前端驗證」按鈕位於 `stg.Utterance_Import 預覽` 標題下方。
+「前端驗證」按鈕位於 `stg.Utterance_Import 預覽` 標題下方。
 
 輔助欄位：
 
@@ -200,7 +227,7 @@ start_timecode 空白，無法回溯語音時間
 
 前端驗證只是早期提示。正式判斷仍以 SQL Server 的 `stg.usp_Validate_Utterance_Import` 為準。
 
-## 七、JSON 匯出格式
+## 十、JSON 匯出格式
 
 JSON 會輸出：
 
@@ -222,13 +249,7 @@ Code_Mapping                供研究者檢查 speaker_code 對應
 frontend_validation_summary 前端錯誤與警告統計
 ```
 
-v7 的 `metadata.export_format` 為：
-
-```text
-trpg_corpus_web_input_json_xlsx_v7_row_delete_responsive
-```
-
-## 八、XLSX 匯出格式
+## 十一、XLSX 匯出格式
 
 XLSX 會輸出四個工作表：
 
@@ -286,7 +307,7 @@ frontend_validation_error
 frontend_validation_warning
 ```
 
-## 九、JSON 匯入 SQL Server 流程
+## 十二、JSON 匯入 SQL Server 流程
 
 先將 JSON 放到本機路徑，例如：
 
@@ -353,7 +374,7 @@ GO
 
 正式載入前請先備份資料庫。
 
-## 十、XLSX 匯入 SQL Server 流程
+## 十三、XLSX 匯入 SQL Server 流程
 
 XLSX 無法直接寫入 `stg.Utterance_Import`，因為 `import_batch_id` 必須由 `stg.Import_Batch` 產生。因此採用 raw table 流程。
 
@@ -380,25 +401,6 @@ EXEC stg.usp_Move_Utterance_Xlsx_Raw_To_Import
 GO
 ```
 
-查看驗證結果：
-
-```sql
-SELECT
-    ib.batch_code,
-    ui.source_row_no,
-    ui.import_status,
-    ui.speaker_type,
-    ui.speaker_code,
-    ui.utterance_text_raw,
-    ui.validation_error,
-    ui.validation_warning
-FROM stg.Utterance_Import AS ui
-INNER JOIN stg.Import_Batch AS ib
-    ON ib.import_batch_id = ui.import_batch_id
-WHERE ib.batch_code = N'DAGO_HTML_UTT_001'
-ORDER BY ui.source_row_no;
-```
-
 無 error 後載入：
 
 ```sql
@@ -407,7 +409,7 @@ EXEC stg.usp_Load_Utterance_Import_To_Dbo
 GO
 ```
 
-## 十一、正式表對應
+## 十四、正式表對應
 
 `stg.Utterance_Import` 進入 `dbo.Utterance` 時會轉換：
 
@@ -434,16 +436,17 @@ utterance_text_clean
 utterance_text_verified
 ```
 
-## 十二、版本接續原則
+## 十五、版本接續原則
 
-後續修改請以 v7 作為基準：
+後續修改請以 v8 作為基準：
 
 ```text
-版本：2026-05-12 json-xlsx-v7-row-delete-responsive
+版本：2026-05-12 json-xlsx-v8-field-notes
 主分支：main
 公開分支：gh-pages
 公開頁：web/dago-corpus-input.html
-核心腳本：web/assets/dago-corpus-input-v7.js
+核心腳本：web/assets/dago-corpus-input-v8.js
+保留回溯腳本：web/assets/dago-corpus-input-v7.js
 保留回溯腳本：web/assets/dago-corpus-input-v6.js
 保留回溯腳本：web/assets/dago-corpus-input-v5.js
 ```
@@ -453,7 +456,7 @@ utterance_text_verified
 ```text
 1. HTML 預覽表頭
 2. JS 的 utteranceColumns / batchColumns / mappingColumns
-3. JSON buildExport()
+3. JSON buildExport() / payload()
 4. XLSX sheets
 5. stg.Utterance_Import_Xlsx_Raw
 6. stg.usp_Import_Utterance_From_Json
