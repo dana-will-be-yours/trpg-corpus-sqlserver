@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TRPG 逐字稿審閱與匯出器</title>
+  <link rel="stylesheet" href="assets/transcript-review.css">
+</head>
+<body>
+  <header class="page-header">
+    <div>
+      <h1>TRPG 逐字稿審閱與匯出器</h1>
+      <p>瀏覽器端整理工具。資料只在本機瀏覽器處理，匯出 JSON 或 CSV 後再由 SSMS 22 匯入 TRPG_Corpus_DB 的 stg.Utterance_Import。</p>
+    </div>
+    <nav>
+      <a href="../index.html">首頁</a>
+      <a href="../database/23_stg_Utterance_Import.sql">stg.Utterance_Import</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>1. 批次與預設值</h2>
+      <div class="form-grid">
+        <label>batch_code<input id="batchCode" value="BATCH_TRPG_UTTERANCE_001"></label>
+        <label>project_code<input id="projectCode" value="TRPG_COCREATION"></label>
+        <label>team_code<input id="teamCode" value="TEAM01"></label>
+        <label>session_code<input id="sessionCode" value="S01"></label>
+        <label>scene_code<input id="sceneCode" value="SCENE01"></label>
+        <label>imported_by<input id="importedBy" value="researcher"></label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>2. 匯入逐字稿</h2>
+      <p class="hint">支援 TXT、JSON、CSV。TXT 建議格式：<code>[00:01:03] GM：你們來到荒廢的祠堂。</code></p>
+      <div class="toolbar">
+        <input id="fileInput" type="file" accept=".txt,.csv,.json,text/plain,text/csv,application/json">
+        <button id="loadSampleBtn" type="button">載入範例</button>
+        <button id="parseBtn" type="button">切分逐字稿</button>
+        <button id="clearBtn" type="button" class="secondary">清空</button>
+      </div>
+      <textarea id="rawText" rows="10" placeholder="貼上逐字稿。每列一個發言，格式可為：[00:01:03] GM：內容"></textarea>
+    </section>
+
+    <section class="panel">
+      <h2>3. 審閱表格</h2>
+      <div class="toolbar">
+        <button id="validateBtn" type="button">前端檢查</button>
+        <button id="addRowBtn" type="button">新增空白列</button>
+        <button id="exportJsonBtn" type="button">匯出 JSON</button>
+        <button id="exportCsvBtn" type="button">匯出 CSV UTF-8</button>
+      </div>
+      <div id="statusBar" class="status">尚未載入資料。</div>
+      <div class="table-wrap">
+        <table id="utteranceTable">
+          <thead>
+            <tr>
+              <th>row</th>
+              <th>turn_no</th>
+              <th>scene_code</th>
+              <th>speaker_type</th>
+              <th>speaker_code</th>
+              <th>function</th>
+              <th>IC</th>
+              <th>GM旁白</th>
+              <th>規則</th>
+              <th>決策</th>
+              <th>知識</th>
+              <th>start</th>
+              <th>raw</th>
+              <th>clean</th>
+              <th>verified</th>
+              <th>review</th>
+              <th>include</th>
+              <th>error</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>4. SSMS 22 匯入提示</h2>
+      <ol>
+        <li>先在 SQL Server Management Studio 22 建好 TRPG_Corpus_DB 並依序執行 database 腳本。</li>
+        <li>用本頁匯出 JSON 或 CSV UTF-8。</li>
+        <li>JSON 可用 <code>OPENROWSET + OPENJSON</code> 匯入 stg.Import_Batch 與 stg.Utterance_Import。</li>
+        <li>CSV 可用 SSMS 匯入精靈或 BULK INSERT 匯入暫存表。</li>
+        <li>匯入後執行既有 stg 驗證程序，再將 valid 資料寫入 dbo.Utterance。</li>
+      </ol>
+    </section>
+  </main>
+
+  <script src="assets/transcript-schema.js"></script>
+  <script src="assets/transcript-review.js"></script>
+</body>
+</html>
