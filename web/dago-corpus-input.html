@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>da_go corpus input UTF-8 fixed</title>
+  <title>da_go corpus input Excel TSV</title>
   <style>
     :root { color-scheme: light; font-family: "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif; background:#f4f1ea; color:#24211d; }
     * { box-sizing: border-box; }
@@ -36,7 +36,7 @@
 <body>
 <main>
   <h1>da_go corpus input</h1>
-  <p class="version">版本：2026-05-12 utf8-byte-bom-fix。若仍看到舊按鈕文字，請按 Ctrl + F5 強制重新整理。</p>
+  <p class="version">版本：2026-05-12 excel-utf16le-tsv-only。所有下載匯出統一為 Excel UTF-16LE TSV。若仍看到 JSON/CSV 下載按鈕，請按 Ctrl + F5 強制重新整理。</p>
   <div class="layout">
     <form id="sourceForm">
       <h2>來源與批次</h2>
@@ -73,12 +73,11 @@
         </table>
       </div>
       <div class="actions">
-        <button type="button" id="downloadJson">下載 JSON UTF-8</button>
-        <button type="button" id="downloadCsv" class="secondary">下載 CSV UTF-8 BOM</button>
-        <button type="button" id="downloadExcelTsv" class="secondary">下載 Excel UTF-16LE TSV</button>
-        <button type="button" id="copyJson" class="secondary">複製 JSON</button>
+        <button type="button" id="downloadExcelTsv">下載 Excel UTF-16LE TSV</button>
+        <button type="button" id="copyTsv" class="secondary">複製 TSV 文字</button>
+        <button type="button" id="copyJson" class="secondary">複製 JSON 供檢查</button>
       </div>
-      <p class="status warning">若要用 Excel 直接開啟，優先使用「Excel UTF-16LE TSV」。若要匯入 SQL Server，優先使用 JSON UTF-8 或 CSV UTF-8 BOM，並在 SSMS 指定 UTF-8。</p>
+      <p class="status warning">下載檔統一為 UTF-16LE + BOM + TSV，副檔名為 .tsv，可直接用 Excel 開啟。匯入 SQL Server 時請先用 Excel 檢查欄位，再另存或用 SSMS 匯入精靈對應欄位。</p>
     </section>
   </div>
 </main>
@@ -96,9 +95,8 @@ $("parseText").addEventListener("click", parseSource);
 $("repairText").addEventListener("click", repairSourceText);
 $("addRow").addEventListener("click", () => { parsedRows.push(makeRow(parsedRows.length + 1, "", "PC", "", "", "dialogue", "SCN-REVIEW-001")); renderRows(); });
 $("clearRows").addEventListener("click", () => { parsedRows = []; renderRows(); setStatus("已清空。"); });
-$("downloadJson").addEventListener("click", () => downloadUtf8("dago_utterance_import.json", JSON.stringify(buildExport(), null, 2), "application/json;charset=utf-8", false));
-$("downloadCsv").addEventListener("click", () => downloadUtf8("dago_utterance_import.csv", toCsv(buildExport().stg_Utterance_Import), "text/csv;charset=utf-8", true));
-$("downloadExcelTsv").addEventListener("click", () => downloadUtf16Le("dago_utterance_import_excel.tsv", toTsv(buildExport().stg_Utterance_Import)));
+$("downloadExcelTsv").addEventListener("click", () => downloadUtf16Le("dago_utterance_import_excel_utf16le.tsv", toTsv(buildExport().stg_Utterance_Import)));
+$("copyTsv").addEventListener("click", () => navigator.clipboard && navigator.clipboard.writeText(toTsv(buildExport().stg_Utterance_Import)));
 $("copyJson").addEventListener("click", () => navigator.clipboard && navigator.clipboard.writeText(JSON.stringify(buildExport(), null, 2)));
 
 function formData() { return Object.fromEntries(new FormData($("sourceForm")).entries()); }
@@ -243,7 +241,7 @@ function buildExport() {
   }));
   return {
     metadata: {
-      export_format: "trpg_corpus_web_input_json_v2_utf8_fixed",
+      export_format: "trpg_corpus_web_input_excel_utf16le_tsv_v1",
       project_code: data.project_code,
       team_code: data.team_code,
       session_code: data.session_code,
@@ -257,7 +255,7 @@ function buildExport() {
       project_code: data.project_code,
       source_table_name: "stg.Utterance_Import",
       source_file_name: data.source_file_name,
-      source_file_type: "json",
+      source_file_type: "xlsx",
       import_purpose: "web transcript input",
       imported_by: "web/dago-corpus-input.html",
       import_status: "created",
@@ -267,17 +265,9 @@ function buildExport() {
   };
 }
 function normalizeExportRow(row) { const out = {}; exportColumns.forEach(key => out[key] = row[key] == null ? null : row[key]); return out; }
-function toCsv(rows) { return [exportColumns.join(",")].concat(rows.map(row => exportColumns.map(key => csvCell(row[key])).join(","))).join("\r\n"); }
-function csvCell(value) { if (value == null) return ""; return `"${String(value).replace(/"/g, '""')}"`; }
 function toTsv(rows) { return [exportColumns.join("\t")].concat(rows.map(row => exportColumns.map(key => tsvCell(row[key])).join("\t"))).join("\r\n"); }
 function tsvCell(value) { if (value == null) return ""; return String(value).replace(/\t/g, " ").replace(/\r?\n/g, " "); }
 
-function downloadUtf8(fileName, text, mimeType, addBom) {
-  const bytes = new TextEncoder().encode(String(text));
-  const parts = addBom ? [new Uint8Array([0xEF, 0xBB, 0xBF]), bytes] : [bytes];
-  const blob = new Blob(parts, { type: mimeType });
-  triggerDownload(fileName, blob);
-}
 function downloadUtf16Le(fileName, text) {
   const s = String(text);
   const bytes = new Uint8Array(2 + s.length * 2);
