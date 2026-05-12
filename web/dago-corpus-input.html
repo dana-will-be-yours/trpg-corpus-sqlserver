@@ -5,15 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
-  <title>da_go corpus input JSON XLSX v6</title>
+  <title>da_go corpus input JSON XLSX v7</title>
   <style>
-    :root{color-scheme:light;font-family:"Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;background:#f4f1ea;color:#24211d}*{box-sizing:border-box}body{margin:0}main{max-width:1280px;margin:0 auto;padding:24px}h1{margin:0 0 8px;font-size:28px}h2{margin:0 0 12px;font-size:20px}.version{color:#7a4d00;margin:0 0 16px}.layout{display:grid;grid-template-columns:360px 1fr;gap:16px;align-items:start}section,form{background:#fffdf8;border:1px solid #d9d0bf;border-radius:8px;padding:16px;margin-bottom:16px}label{display:grid;gap:6px;margin-bottom:12px;font-size:14px}input,textarea,select,button{font:inherit;border:1px solid #b8ad9b;border-radius:6px;padding:9px 10px;background:#fff;color:#24211d}textarea{min-height:260px;resize:vertical;line-height:1.55}button{cursor:pointer;background:#2e5d50;color:#fff;border-color:#2e5d50}button.secondary{background:#fff;color:#2e5d50}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #e1d8c7;padding:8px;text-align:left;vertical-align:top}th{background:#ece6d9;position:sticky;top:0;z-index:1}td input,td select,td textarea{width:100%;min-width:110px}td textarea{min-height:64px;min-width:360px}.table-wrap{max-height:560px;overflow:auto;border:1px solid #d9d0bf;border-radius:8px;background:#fff}.status{min-height:24px;margin-top:10px;color:#5a3c12}.warning{color:#8a4b00}.err{color:#9b1c1c;white-space:pre-wrap;min-width:220px}.warn{color:#8a4b00;white-space:pre-wrap;min-width:220px}@media(max-width:900px){main{padding:16px}.layout{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
+    :root{color-scheme:light;font-family:"Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;background:#f4f1ea;color:#24211d}*{box-sizing:border-box}body{margin:0;overflow-x:hidden}main{width:min(100vw,1600px);max-width:none;margin:0 auto;padding:clamp(8px,1.5vw,24px)}h1{margin:0 0 8px;font-size:28px}h2{margin:0 0 12px;font-size:20px}.version{color:#7a4d00;margin:0 0 16px}.layout{display:grid;grid-template-columns:minmax(300px,26vw) minmax(0,1fr);gap:clamp(8px,1vw,16px);align-items:start}section,form{background:#fffdf8;border:1px solid #d9d0bf;border-radius:8px;padding:clamp(10px,1vw,16px);margin-bottom:16px;min-width:0}label{display:grid;gap:6px;margin-bottom:12px;font-size:14px}input,textarea,select,button{font:inherit;border:1px solid #b8ad9b;border-radius:6px;padding:9px 10px;background:#fff;color:#24211d}textarea{min-height:260px;resize:vertical;line-height:1.55}button{cursor:pointer;background:#2e5d50;color:#fff;border-color:#2e5d50;white-space:nowrap}button.secondary{background:#fff;color:#2e5d50}button.delete-row{background:#8a3a2b;border-color:#8a3a2b;color:#fff;padding:6px 8px}.actions{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.table-wrap{width:100%;max-width:100%;max-height:560px;overflow:auto;border:1px solid #d9d0bf;border-radius:8px;background:#fff}table{width:max-content;min-width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #e1d8c7;padding:8px;text-align:left;vertical-align:top}th{background:#ece6d9;position:sticky;top:0;z-index:1}td input,td select,td textarea{width:100%;min-width:110px}td textarea[data-field="utterance_text_raw"]{width:clamp(280px,38vw,720px);min-width:280px;min-height:64px}.status{min-height:24px;margin-top:10px;color:#5a3c12}.warning{color:#8a4b00}.err{color:#9b1c1c;white-space:pre-wrap;min-width:220px;max-width:320px}.warn{color:#8a4b00;white-space:pre-wrap;min-width:220px;max-width:320px}.op{min-width:68px}@media(max-width:1100px){main{width:100vw}.layout{grid-template-columns:1fr}.grid{grid-template-columns:1fr}textarea{min-height:180px}}
   </style>
 </head>
 <body>
 <main>
   <h1>da_go corpus input</h1>
-  <p class="version">版本：2026-05-12 json-xlsx-v6-edit-stable。此版修正輸入欄位時跳回表格頂端、打一字即失焦的問題。匯出格式與 SQL 流程維持 v5 不變。</p>
+  <p class="version">版本：2026-05-12 json-xlsx-v7-row-delete-responsive。此版新增單列刪除、調整前端驗證位置，並改善寬螢幕與窄螢幕版面。JSON/XLSX 欄位與 SQL 流程維持 v6 不變。</p>
   <div class="layout">
     <form id="sourceForm">
       <h2>來源與批次</h2>
@@ -45,23 +45,23 @@
           <button type="button" id="autoMapping" class="secondary">自動建立 mapping</button>
           <button type="button" id="addMapping" class="secondary">新增 mapping</button>
           <button type="button" id="applyMapping" class="secondary">套用 Speaker Mapping</button>
-          <button type="button" id="validateBtn">前端驗證</button>
         </div>
-        <div class="table-wrap"><table><thead><tr><th>raw_speaker_label</th><th>speaker_type</th><th>speaker_code</th><th>target_table</th><th>note</th></tr></thead><tbody id="mappingRows"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th class="op">操作</th><th>raw_speaker_label</th><th>speaker_type</th><th>speaker_code</th><th>target_table</th><th>note</th></tr></thead><tbody id="mappingRows"></tbody></table></div>
       </section>
 
       <section>
         <h2>stg.Utterance_Import 預覽</h2>
-        <div class="table-wrap"><table><thead><tr><th>row</th><th>speaker_type</th><th>speaker_code</th><th>speaker_label_raw</th><th>function</th><th>start_timecode</th><th>text</th><th>scene_code</th><th>frontend_error</th><th>frontend_warning</th></tr></thead><tbody id="rows"></tbody></table></div>
         <div class="actions">
+          <button type="button" id="validateBtn">前端驗證</button>
           <button type="button" id="downloadJson">下載 JSON</button>
           <button type="button" id="downloadXlsx" class="secondary">下載 XLSX</button>
         </div>
-        <p class="status warning">輸入欄位時只會局部更新資料，不會重畫整張表。按「前端驗證」會更新所有 error / warning。下載 JSON/XLSX 前會執行全表驗證，但不強制重畫畫面。</p>
+        <div class="table-wrap"><table><thead><tr><th class="op">操作</th><th>row</th><th>speaker_type</th><th>speaker_code</th><th>speaker_label_raw</th><th>function</th><th>start_timecode</th><th>text</th><th>scene_code</th><th>frontend_error</th><th>frontend_warning</th></tr></thead><tbody id="rows"></tbody></table></div>
+        <p class="status warning">輸入欄位時只會局部更新資料，不會重畫整張表。按「前端驗證」會更新所有 error / warning。刪除逐字稿列後會重新編號。下載 JSON/XLSX 前會執行全表驗證，但不強制重畫畫面。</p>
       </section>
     </div>
   </div>
 </main>
-<script src="assets/dago-corpus-input-v6.js?v=20260512-v6-edit-stable"></script>
+<script src="assets/dago-corpus-input-v7.js?v=20260512-v7-row-delete-responsive"></script>
 </body>
 </html>
