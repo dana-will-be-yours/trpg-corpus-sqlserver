@@ -41,8 +41,10 @@
     th, td { border-bottom: 1px solid #e1d8c7; padding: 8px; text-align: left; vertical-align: top; }
     th { background: #ece6d9; position: sticky; top: 0; }
     td input, td select { width: 100%; min-width: 110px; }
+    td input[data-field="utterance_text_raw"] { min-width: 360px; }
     .table-wrap { max-height: 520px; overflow: auto; border: 1px solid #d9d0bf; border-radius: 8px; background: #fff; }
     .status { min-height: 24px; margin-top: 10px; color: #5a3c12; }
+    .warning { color: #8a4b00; }
     @media (max-width: 900px) {
       main { padding: 16px; }
       .layout { grid-template-columns: 1fr; }
@@ -77,10 +79,11 @@
         <input name="source_file_name" value="dago-chronicle.html">
       </label>
       <label>輸入 HTML 或文字
-        <textarea id="sourceText" placeholder="貼上論壇列印頁 HTML、純文字團錄，或研究者手動整理內容。"></textarea>
+        <textarea id="sourceText" placeholder="貼上論壇列印頁 HTML、純文字團錄，或研究者手動整理內容。若貼上後已是亂碼，先按「修復貼上文字亂碼」。"></textarea>
       </label>
       <div class="actions">
         <button type="button" id="parseText">解析</button>
+        <button type="button" id="repairText" class="secondary">修復貼上文字亂碼</button>
         <button type="button" id="addRow" class="secondary">新增空列</button>
         <button type="button" id="clearRows" class="secondary">清空列</button>
       </div>
@@ -107,9 +110,10 @@
       </div>
       <div class="actions">
         <button type="button" id="downloadJson">下載 JSON</button>
-        <button type="button" id="downloadCsv" class="secondary">下載 CSV</button>
+        <button type="button" id="downloadCsv" class="secondary">下載 CSV UTF-8 BOM</button>
         <button type="button" id="copyJson" class="secondary">複製 JSON</button>
       </div>
+      <p class="status warning">CSV 下載會加上 UTF-8 BOM，避免 Excel 或 Windows 匯入工具把中文欄位誤判成 ANSI。JSON 維持純 UTF-8，便於 SSMS 以 CODEPAGE = '65001' 匯入。</p>
     </section>
   </div>
 </main>
@@ -121,6 +125,7 @@ let parsedRows = [];
 
 const $ = (id) => document.getElementById(id);
 $("parseText").addEventListener("click", parseSource);
+$("repairText").addEventListener("click", repairSourceText);
 $("addRow").addEventListener("click", () => {
   parsedRows.push(makeRow(parsedRows.length + 1, "", "PC", "", "", "dialogue", "SCN-REVIEW-001"));
   renderRows();
@@ -130,7 +135,7 @@ $("clearRows").addEventListener("click", () => {
   renderRows();
 });
 $("downloadJson").addEventListener("click", () => download("dago_utterance_import.json", JSON.stringify(buildExport(), null, 2), "application/json;charset=utf-8"));
-$("downloadCsv").addEventListener("click", () => download("dago_utterance_import.csv", toCsv(buildExport().stg_Utterance_Import), "text/csv;charset=utf-8"));
+$("downloadCsv").addEventListener("click", () => download("dago_utterance_import.csv", toCsv(buildExport().stg_Utterance_Import), "text/csv;charset=utf-8", true));
 $("copyJson").addEventListener("click", () => navigator.clipboard && navigator.clipboard.writeText(JSON.stringify(buildExport(), null, 2)));
 
 function formData() {
@@ -145,11 +150,26 @@ function parseSource() {
     $("status").textContent = "資料不足，需要新資料提供";
     return;
   }
-  const text = htmlToText(raw);
+  const repairedRaw = maybeRepairMojibake(raw);
+  if (repairedRaw !== raw) {
+    $("sourceText").value = repairedRaw;
+  }
+  const text = htmlToText(repairedRaw);
   const lines = text.split(/\r?\n/).map((line) => line.trim()).filter((line) => line && !isBoilerplate(line));
   parsedRows = lines.map((line, index) => parseLine(line, index + 1, data));
   renderRows();
-  $("status").textContent = `已解析 ${parsedRows.length} 列。`;
+  $("status").textContent = `已解析 ${parsedRows.length} 列。${repairedRaw !== raw ? "已自動修復常見 UTF-8 亂碼。" : ""}`;
+}
+
+function repairSourceText() {
+  const raw = $("sourceText").value;
+  if (!raw.trim()) {
+    $("status").textContent = "資料不足，需要新資料提供";
+    return;
+  }
+  const fixed = repairUtf8Mojibake(raw);
+  $("sourceText").value = fixed;
+  $("status").textContent = fixed === raw ? "未偵測到可修復的 UTF-8 亂碼。" : "已修復貼上文字中的常見 UTF-8 亂碼，請重新解析。";
 }
 
 function htmlToText(raw) {
@@ -191,6 +211,7 @@ function detectSpeakerCode(speaker, type) {
 
 function makeRow(sourceRowNo, text, speakerType, speakerCode, speakerLabel, fn, sceneCode) {
   const data = formData();
+  const repairedText = maybeRepairMojibake(text);
   return {
     import_batch_code: data.batch_code,
     import_batch_id: null,
@@ -214,8 +235,8 @@ function makeRow(sourceRowNo, text, speakerType, speakerCode, speakerLabel, fn, 
     start_timecode: null,
     end_timecode: null,
     duration_sec_text: null,
-    utterance_text_raw: text,
-    utterance_text_clean: text,
+    utterance_text_raw: repairedText,
+    utterance_text_clean: repairedText,
     utterance_text_verified: null,
     language_code: "zh-TW",
     emotion_label: "neutral",
@@ -272,6 +293,12 @@ function updateRow(event) {
 
 function buildExport() {
   const data = formData();
+  const rowsForExport = parsedRows.map((row) => ({
+    ...row,
+    utterance_text_raw: maybeRepairMojibake(row.utterance_text_raw),
+    utterance_text_clean: maybeRepairMojibake(row.utterance_text_clean),
+    utterance_text_verified: maybeRepairMojibake(row.utterance_text_verified)
+  }));
   return {
     metadata: {
       export_format: "trpg_corpus_web_input_json_v1",
@@ -292,9 +319,9 @@ function buildExport() {
       import_purpose: "web transcript input",
       imported_by: "web/dago-corpus-input.html",
       import_status: "created",
-      total_row_count: parsedRows.length
+      total_row_count: rowsForExport.length
     },
-    stg_Utterance_Import: parsedRows
+    stg_Utterance_Import: rowsForExport
   };
 }
 
@@ -309,8 +336,9 @@ function csvCell(value) {
   return `"${String(value).replace(/"/g, '""')}"`;
 }
 
-function download(fileName, text, type) {
-  const blob = new Blob([text], { type });
+function download(fileName, text, type, addUtf8Bom = false) {
+  const body = addUtf8Bom && !String(text).startsWith("\uFEFF") ? "\uFEFF" + text : text;
+  const blob = new Blob([body], { type });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -319,6 +347,41 @@ function download(fileName, text, type) {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+}
+
+function maybeRepairMojibake(value) {
+  if (value == null) return value;
+  const text = String(value);
+  if (!looksLikeUtf8Mojibake(text)) return text;
+  return repairUtf8Mojibake(text);
+}
+
+function looksLikeUtf8Mojibake(text) {
+  const s = String(text || "");
+  return /[ÃÂâ][\s\S]*[\x80-\xBF]|[åæäçèé][\s\S]*[\x80-\xBF]|�/.test(s) || /(?:å|æ|ç|è|é|ä|ã|ï|ð)[\u0080-\u00ff]{1,2}/i.test(s);
+}
+
+function repairUtf8Mojibake(text) {
+  const s = String(text == null ? "" : text);
+  try {
+    const bytes = Uint8Array.from(Array.from(s, (ch) => ch.charCodeAt(0) & 0xff));
+    const decoded = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+    return scoreReadableChinese(decoded) > scoreReadableChinese(s) ? decoded : s;
+  } catch (_err) {
+    try {
+      const decoded = decodeURIComponent(escape(s));
+      return scoreReadableChinese(decoded) > scoreReadableChinese(s) ? decoded : s;
+    } catch (_err2) {
+      return s;
+    }
+  }
+}
+
+function scoreReadableChinese(text) {
+  const s = String(text || "");
+  const chinese = (s.match(/[\u4e00-\u9fff]/g) || []).length;
+  const mojibake = (s.match(/[ÃÂâ�]|(?:å|æ|ç|è|é|ä|ã|ï|ð)[\u0080-\u00ff]/g) || []).length;
+  return chinese * 3 - mojibake * 4;
 }
 
 function esc(value) {
