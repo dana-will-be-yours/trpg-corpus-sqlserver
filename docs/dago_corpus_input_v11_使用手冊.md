@@ -5,30 +5,31 @@
 目前維護基準：
 
 ```text
-2026-05-12 json-xlsx-v12-docx-import-large-transcript
+2026-05-12 json-xlsx-v12-docx-review-workspace-save-fix
 ```
 
 請優先使用：
 
 ```text
 docs/dago_corpus_input_v12_使用手冊.md
-web/assets/dago-corpus-docx-v12.js
-web/assets/dago-corpus-input-v11.js
-web/assets/dago-corpus-export-v11-fix.js
 web/dago-corpus-input.html
 web/dago-corpus-review.html
+web/assets/dago-corpus-input-v11.js
+web/assets/dago-corpus-export-v11-fix.js
+web/assets/dago-corpus-docx-v12.js
+web/assets/dago-corpus-open-review-v12-fix.js
 ```
 
 v12 公開輸入頁：
 
 ```text
-https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/web/dago-corpus-input.html?v=20260512-v12-docx-import-large-transcript
+https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/web/dago-corpus-input.html?v=20260512-v12-docx-review-workspace-save-fix
 ```
 
 v12 審閱工作頁：
 
 ```text
-https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/web/dago-corpus-review.html?v=20260512-v12-docx-import-large-transcript
+https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/web/dago-corpus-review.html?v=20260512-v12-docx-review-workspace-save-fix
 ```
 
 v11 功能摘要如下，僅供回溯：
@@ -50,4 +51,8 @@ v12 已在 v11 基礎上新增：
 3. browser-side DOCX ZIP / XML 解析。
 4. 將 word/document.xml 的段落轉成 raw transcript。
 5. 自動接續 v11 parseTranscriptBlocks() 與審閱工作頁流程。
+6. DOCX 匯入後 rowSummary / sessionStorage 檢查。
+7. 審閱工作頁保存修正，避免開啟空白審閱頁。
 ```
+
+後續修改一律以 v12 手冊與 v12 公開頁為準。此歷史檔不再作為實作依據。
