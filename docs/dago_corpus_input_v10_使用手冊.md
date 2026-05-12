@@ -1,33 +1,34 @@
 # da_go corpus input v10 使用手冊（歷史版）
 
-此檔案保留作為 v10 歷史紀錄。後續維護基準已改為 v11。
+此檔案保留作為 v10 歷史紀錄。後續維護基準已改為 v12。
 
 目前維護基準：
 
 ```text
-2026-05-12 json-xlsx-v11-review-workspace-gm-npc-quote
+2026-05-12 json-xlsx-v12-docx-import-large-transcript
 ```
 
 請優先使用：
 
 ```text
-docs/dago_corpus_input_v11_使用手冊.md
+docs/dago_corpus_input_v12_使用手冊.md
+web/assets/dago-corpus-docx-v12.js
 web/assets/dago-corpus-input-v11.js
 web/assets/dago-corpus-export-v11-fix.js
 web/dago-corpus-input.html
 web/dago-corpus-review.html
 ```
 
-v11 公開頁：
+v12 公開輸入頁：
 
 ```text
-https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/web/dago-corpus-input.html?v=20260512-v11-review-workspace-gm-npc-quote
+https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/web/dago-corpus-input.html?v=20260512-v12-docx-import-large-transcript
 ```
 
-v11 審閱工作頁：
+v12 審閱工作頁：
 
 ```text
-https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/web/dago-corpus-review.html?v=20260512-v11-review-workspace-gm-npc-quote
+https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/web/dago-corpus-review.html?v=20260512-v12-docx-import-large-transcript
 ```
 
 v10 功能摘要如下，僅供回溯：
@@ -45,7 +46,7 @@ v10 功能摘要如下，僅供回溯：
 10. 新增分批匯出 JSON/XLSX。
 ```
 
-v11 已在 v10 基礎上新增：
+v12 已在後續版本基礎上新增：
 
 ```text
 1. 全螢幕審閱工作頁。
@@ -54,4 +55,7 @@ v11 已在 v10 基礎上新增：
 4. ai_annotation_json.segments。
 5. 真正 XLSX 四工作表匯出修正。
 6. 獨立 UTF-16LE TSV 匯出。
+7. Word .docx 純文字逐字稿匯入。
+8. Word 段落式逐字稿匯入。
+9. browser-side DOCX ZIP / XML 解析。
 ```
