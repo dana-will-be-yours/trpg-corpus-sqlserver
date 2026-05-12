@@ -1,19 +1,25 @@
-# da_go corpus input v5 使用手冊
+# da_go corpus input v5/v6 使用手冊
 
-版本記錄：2026-05-12 `json-xlsx-v5-mapping`
+版本記錄：
 
-本手冊記錄 `web/dago-corpus-input.html` v5 的使用方式、匯出格式、SQL Server 匯入流程與資料庫對應。此版已同步寫入 `main`，公開頁由 `gh-pages` 提供。
+```text
+2026-05-12 json-xlsx-v5-mapping
+2026-05-12 json-xlsx-v6-edit-stable
+```
+
+本手冊記錄 `web/dago-corpus-input.html` 的使用方式、匯出格式、SQL Server 匯入流程與資料庫對應。v6 延續 v5 的 JSON/XLSX 匯出格式與 SQL 流程，只修正前端互動層。
 
 公開頁：
 
 ```text
-https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/web/dago-corpus-input.html?v=20260512-v5-mapping
+https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/web/dago-corpus-input.html?v=20260512-v6-edit-stable
 ```
 
 主分支檔案：
 
 ```text
 web/dago-corpus-input.html
+web/assets/dago-corpus-input-v6.js
 web/assets/dago-corpus-input-v5.js
 database/26_stg_Utterance_Import_Xlsx_Raw.sql
 database/27_stg_usp_Import_Utterance_From_Json.sql
@@ -22,7 +28,7 @@ database/28_stg_usp_Move_Utterance_Xlsx_Raw_To_Import.sql
 
 ## 一、此版目標
 
-此版用於將 TRPG 語音逐字稿、文字逐字稿、論壇貼文或研究者手動整理內容轉成 SQL Server 可匯入格式。
+此工具用於將 TRPG 語音逐字稿、文字逐字稿、論壇貼文或研究者手動整理內容轉成 SQL Server 可匯入格式。
 
 資料流：
 
@@ -41,7 +47,34 @@ HTML 貼上逐字稿
 
 此頁不直接連線 SQL Server，不保存資料庫帳密，不在 GitHub Pages 中寫入資料庫。
 
-## 二、輸入格式
+## 二、v6 修正內容
+
+v6 只修改前端互動，不改匯出格式，不改 SQL 流程。
+
+修正項目：
+
+```text
+1. 新增 validateSingleRow()
+2. 新增 updateValidationCells()
+3. 修改 updateRow()，移除每次輸入時 renderRows()
+4. 修改 updateMapping()，移除每次輸入時 renderRows() / renderMappings()
+5. 新增「套用 Speaker Mapping」按鈕
+6. 只有解析、新增列、清空列、自動 mapping、全表驗證時才 renderRows()
+7. 下載 JSON/XLSX 前執行 validateAll()，但不強制重畫表格
+```
+
+預期效果：
+
+```text
+1. 在 stg.Utterance_Import 預覽中輸入文字時，不會跳回最上端
+2. 打字不會每打一字就失焦
+3. textarea 可連續輸入整段文字
+4. error / warning 仍可在按「前端驗證」後完整更新
+5. JSON / XLSX 匯出內容仍會包含最新輸入值
+6. 現有 SQL 流程不受影響
+```
+
+## 三、輸入格式
 
 建議每列一個發言。支援時間碼：
 
@@ -76,7 +109,7 @@ frontend_validation_error
 frontend_validation_warning
 ```
 
-## 三、Speaker Mapping
+## 四、Speaker Mapping
 
 `Speaker Mapping` 區用來把逐字稿中的原始說話者名稱，對應到 SQL Server 正式表可辨識的 code。
 
@@ -98,11 +131,13 @@ PC                              → dbo.Player_Character.character_code
 NPC                             → dbo.NPC.npc_code
 ```
 
+v6 操作差異：修改 mapping 欄位時，不會立刻重畫下方逐字稿表。修改完成後，請按「套用 Speaker Mapping」。這樣可以避免輸入一個字就失焦。
+
 前端自動產生的 `PC-陽月`、`TM-GM` 只作為暫時值。匯入正式表前，必須改成 SQL Server 已存在的正式 code。否則 `stg.usp_Validate_Utterance_Import` 會產生 error。
 
-## 四、前端驗證
+## 五、前端驗證
 
-v5 會產生兩個輔助欄位：
+v6 會產生兩個輔助欄位：
 
 ```text
 frontend_validation_error
@@ -133,7 +168,7 @@ start_timecode 空白，無法回溯語音時間
 
 前端驗證只是早期提示。正式判斷仍以 SQL Server 的 `stg.usp_Validate_Utterance_Import` 為準。
 
-## 五、JSON 匯出格式
+## 六、JSON 匯出格式
 
 JSON 會輸出：
 
@@ -155,7 +190,13 @@ Code_Mapping                供研究者檢查 speaker_code 對應
 frontend_validation_summary 前端錯誤與警告統計
 ```
 
-## 六、XLSX 匯出格式
+v6 的 `metadata.export_format` 為：
+
+```text
+trpg_corpus_web_input_json_xlsx_v6_edit_stable
+```
+
+## 七、XLSX 匯出格式
 
 XLSX 會輸出四個工作表：
 
@@ -213,7 +254,7 @@ frontend_validation_error
 frontend_validation_warning
 ```
 
-## 七、JSON 匯入 SQL Server 流程
+## 八、JSON 匯入 SQL Server 流程
 
 先將 JSON 放到本機路徑，例如：
 
@@ -280,7 +321,7 @@ GO
 
 正式載入前請先備份資料庫。
 
-## 八、XLSX 匯入 SQL Server 流程
+## 九、XLSX 匯入 SQL Server 流程
 
 XLSX 無法直接寫入 `stg.Utterance_Import`，因為 `import_batch_id` 必須由 `stg.Import_Batch` 產生。因此採用 raw table 流程。
 
@@ -334,7 +375,7 @@ EXEC stg.usp_Load_Utterance_Import_To_Dbo
 GO
 ```
 
-## 九、正式表對應
+## 十、正式表對應
 
 `stg.Utterance_Import` 進入 `dbo.Utterance` 時會轉換：
 
@@ -361,13 +402,13 @@ utterance_text_clean
 utterance_text_verified
 ```
 
-## 十、常見錯誤
+## 十一、常見錯誤
 
 ### 1. speaker_code 找不到
 
 原因：前端自動 code 與資料庫正式 code 不一致。
 
-處理：在 Speaker Mapping 中把 `speaker_code` 改成正式 code。
+處理：在 Speaker Mapping 中把 `speaker_code` 改成正式 code，並按「套用 Speaker Mapping」。
 
 ### 2. session_code 找不到
 
@@ -393,16 +434,17 @@ utterance_text_verified
 
 處理：填寫 `exclusion_reason`。
 
-## 十一、版本接續原則
+## 十二、版本接續原則
 
-後續修改請以此版作為基準：
+後續修改請以 v6 作為基準：
 
 ```text
-版本：2026-05-12 json-xlsx-v5-mapping
+版本：2026-05-12 json-xlsx-v6-edit-stable
 主分支：main
 公開分支：gh-pages
 公開頁：web/dago-corpus-input.html
-核心腳本：web/assets/dago-corpus-input-v5.js
+核心腳本：web/assets/dago-corpus-input-v6.js
+保留回溯腳本：web/assets/dago-corpus-input-v5.js
 ```
 
 若後續新增欄位，必須同步修改：
