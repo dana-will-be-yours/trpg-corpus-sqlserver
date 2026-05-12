@@ -1,24 +1,26 @@
-# da_go corpus input v5/v6 使用手冊
+# da_go corpus input v7 使用手冊
 
 版本記錄：
 
 ```text
 2026-05-12 json-xlsx-v5-mapping
 2026-05-12 json-xlsx-v6-edit-stable
+2026-05-12 json-xlsx-v7-row-delete-responsive
 ```
 
-本手冊記錄 `web/dago-corpus-input.html` 的使用方式、匯出格式、SQL Server 匯入流程與資料庫對應。v6 延續 v5 的 JSON/XLSX 匯出格式與 SQL 流程，只修正前端互動層。
+本手冊以 v7 作為後續維護基準。v7 只修改前端互動與版面，不修改 `database/*.sql`，不修改 JSON 欄位，不修改 XLSX 工作表結構，不修改 staging 到正式表的 SQL 流程。
 
 公開頁：
 
 ```text
-https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/web/dago-corpus-input.html?v=20260512-v6-edit-stable
+https://dana-will-be-yours.github.io/trpg-corpus-sqlserver/web/dago-corpus-input.html?v=20260512-v7-row-delete-responsive
 ```
 
 主分支檔案：
 
 ```text
 web/dago-corpus-input.html
+web/assets/dago-corpus-input-v7.js
 web/assets/dago-corpus-input-v6.js
 web/assets/dago-corpus-input-v5.js
 database/26_stg_Utterance_Import_Xlsx_Raw.sql
@@ -26,7 +28,7 @@ database/27_stg_usp_Import_Utterance_From_Json.sql
 database/28_stg_usp_Move_Utterance_Xlsx_Raw_To_Import.sql
 ```
 
-## 一、此版目標
+## 一、工具目標
 
 此工具用於將 TRPG 語音逐字稿、文字逐字稿、論壇貼文或研究者手動整理內容轉成 SQL Server 可匯入格式。
 
@@ -47,32 +49,39 @@ HTML 貼上逐字稿
 
 此頁不直接連線 SQL Server，不保存資料庫帳密，不在 GitHub Pages 中寫入資料庫。
 
-## 二、v6 修正內容
+## 二、v7 修改內容
 
-v6 只修改前端互動，不改匯出格式，不改 SQL 流程。
-
-修正項目：
+v7 修改項目：
 
 ```text
-1. 新增 validateSingleRow()
-2. 新增 updateValidationCells()
-3. 修改 updateRow()，移除每次輸入時 renderRows()
-4. 修改 updateMapping()，移除每次輸入時 renderRows() / renderMappings()
-5. 新增「套用 Speaker Mapping」按鈕
-6. 只有解析、新增列、清空列、自動 mapping、全表驗證時才 renderRows()
-7. 下載 JSON/XLSX 前執行 validateAll()，但不強制重畫表格
+1. Speaker Mapping 可刪除單列。
+2. stg.Utterance_Import 預覽可刪除單列。
+3. 前端驗證按鈕移到 stg.Utterance_Import 預覽標題下方。
+4. 桌機寬螢幕可使用更多水平空間。
+5. 筆電或窄螢幕會自動改為單欄。
+6. 表格自身水平捲動，不讓整個頁面難以操作。
+7. JSON/XLSX 欄位結構與 SQL 流程維持既有設計不變。
 ```
 
-預期效果：
+新增或調整的主要函式：
 
 ```text
-1. 在 stg.Utterance_Import 預覽中輸入文字時，不會跳回最上端
-2. 打字不會每打一字就失焦
-3. textarea 可連續輸入整段文字
-4. error / warning 仍可在按「前端驗證」後完整更新
-5. JSON / XLSX 匯出內容仍會包含最新輸入值
-6. 現有 SQL 流程不受影響
+renumberRows()
+deleteRow(index)
+deleteMapping(index)
+renderRows() 新增操作欄與刪除按鈕
+renderMappings() 新增操作欄與刪除按鈕
 ```
+
+刪除逐字稿列後，前端會重新編號：
+
+```text
+source_row_no
+turn_no_text
+utterance_code
+```
+
+刪除 Speaker Mapping 後，不會自動刪除逐字稿列。若要讓 mapping 變更套用到逐字稿列，請按「套用 Speaker Mapping」。
 
 ## 三、輸入格式
 
@@ -116,6 +125,7 @@ frontend_validation_warning
 欄位：
 
 ```text
+操作               刪除此 mapping 單列
 raw_speaker_label  原始逐字稿標籤，例如 GM、陽月、楚服
 speaker_type       GM、PL、PC、NPC、Observer、Researcher
 speaker_code       SQL Server 正式表既有 code
@@ -131,13 +141,35 @@ PC                              → dbo.Player_Character.character_code
 NPC                             → dbo.NPC.npc_code
 ```
 
-v6 操作差異：修改 mapping 欄位時，不會立刻重畫下方逐字稿表。修改完成後，請按「套用 Speaker Mapping」。這樣可以避免輸入一個字就失焦。
-
 前端自動產生的 `PC-陽月`、`TM-GM` 只作為暫時值。匯入正式表前，必須改成 SQL Server 已存在的正式 code。否則 `stg.usp_Validate_Utterance_Import` 會產生 error。
 
-## 五、前端驗證
+## 五、stg.Utterance_Import 預覽
 
-v6 會產生兩個輔助欄位：
+v7 預覽表新增 `操作` 欄，可刪除單列。刪除單列時會跳出確認視窗。確認後該列不會匯出 JSON/XLSX。
+
+欄位：
+
+```text
+操作
+row
+speaker_type
+speaker_code
+speaker_label_raw
+function
+start_timecode
+text
+scene_code
+frontend_error
+frontend_warning
+```
+
+若只是要排除分析，建議後續新增 `include_in_analysis_text` 與 `exclusion_reason` 的 UI。現階段按「刪除」表示該 turn 不進匯出檔。
+
+## 六、前端驗證
+
+v7 的「前端驗證」按鈕位於 `stg.Utterance_Import 預覽` 標題下方。
+
+輔助欄位：
 
 ```text
 frontend_validation_error
@@ -168,7 +200,7 @@ start_timecode 空白，無法回溯語音時間
 
 前端驗證只是早期提示。正式判斷仍以 SQL Server 的 `stg.usp_Validate_Utterance_Import` 為準。
 
-## 六、JSON 匯出格式
+## 七、JSON 匯出格式
 
 JSON 會輸出：
 
@@ -190,13 +222,13 @@ Code_Mapping                供研究者檢查 speaker_code 對應
 frontend_validation_summary 前端錯誤與警告統計
 ```
 
-v6 的 `metadata.export_format` 為：
+v7 的 `metadata.export_format` 為：
 
 ```text
-trpg_corpus_web_input_json_xlsx_v6_edit_stable
+trpg_corpus_web_input_json_xlsx_v7_row_delete_responsive
 ```
 
-## 七、XLSX 匯出格式
+## 八、XLSX 匯出格式
 
 XLSX 會輸出四個工作表：
 
@@ -207,7 +239,7 @@ Code_Mapping
 Metadata
 ```
 
-`stg_Utterance_Import` 工作表的主要欄位：
+`stg_Utterance_Import` 工作表的主要欄位維持既有設計：
 
 ```text
 import_batch_code
@@ -254,7 +286,7 @@ frontend_validation_error
 frontend_validation_warning
 ```
 
-## 八、JSON 匯入 SQL Server 流程
+## 九、JSON 匯入 SQL Server 流程
 
 先將 JSON 放到本機路徑，例如：
 
@@ -321,7 +353,7 @@ GO
 
 正式載入前請先備份資料庫。
 
-## 九、XLSX 匯入 SQL Server 流程
+## 十、XLSX 匯入 SQL Server 流程
 
 XLSX 無法直接寫入 `stg.Utterance_Import`，因為 `import_batch_id` 必須由 `stg.Import_Batch` 產生。因此採用 raw table 流程。
 
@@ -375,7 +407,7 @@ EXEC stg.usp_Load_Utterance_Import_To_Dbo
 GO
 ```
 
-## 十、正式表對應
+## 十一、正式表對應
 
 `stg.Utterance_Import` 進入 `dbo.Utterance` 時會轉換：
 
@@ -402,48 +434,17 @@ utterance_text_clean
 utterance_text_verified
 ```
 
-## 十一、常見錯誤
-
-### 1. speaker_code 找不到
-
-原因：前端自動 code 與資料庫正式 code 不一致。
-
-處理：在 Speaker Mapping 中把 `speaker_code` 改成正式 code，並按「套用 Speaker Mapping」。
-
-### 2. session_code 找不到
-
-原因：`dbo.TRPG_Session` 尚未建立對應場次，或 team_code 不正確。
-
-處理：先建立 `Research_Project`、`Team`、`TRPG_Session`。
-
-### 3. scene_code 找不到
-
-原因：輸入了資料庫中不存在的 scene_code。
-
-處理：先建立 `dbo.Scene`，或讓 scene_code 空白，使 `scene_id` 為 NULL。
-
-### 4. 同一 session turn_no 重複
-
-原因：同一場次中 `turn_no_text` 重複，或正式表已存在同 turn_no。
-
-處理：修正 turn_no，或改用新 batch 與新 session。
-
-### 5. include_in_analysis_text = 0 但 exclusion_reason 空白
-
-原因：正式表要求排除分析時必須填排除理由。
-
-處理：填寫 `exclusion_reason`。
-
 ## 十二、版本接續原則
 
-後續修改請以 v6 作為基準：
+後續修改請以 v7 作為基準：
 
 ```text
-版本：2026-05-12 json-xlsx-v6-edit-stable
+版本：2026-05-12 json-xlsx-v7-row-delete-responsive
 主分支：main
 公開分支：gh-pages
 公開頁：web/dago-corpus-input.html
-核心腳本：web/assets/dago-corpus-input-v6.js
+核心腳本：web/assets/dago-corpus-input-v7.js
+保留回溯腳本：web/assets/dago-corpus-input-v6.js
 保留回溯腳本：web/assets/dago-corpus-input-v5.js
 ```
 
