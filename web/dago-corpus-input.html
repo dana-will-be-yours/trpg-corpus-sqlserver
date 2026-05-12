@@ -3,40 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>da_go corpus input Excel TSV</title>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <title>da_go corpus input JSON XLSX v5</title>
   <style>
-    :root { color-scheme: light; font-family: "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif; background:#f4f1ea; color:#24211d; }
-    * { box-sizing: border-box; }
-    body { margin:0; }
-    main { max-width:1180px; margin:0 auto; padding:24px; }
-    h1 { margin:0 0 8px; font-size:28px; }
-    h2 { margin:0 0 12px; font-size:20px; }
-    .version { color:#7a4d00; margin:0 0 16px; }
-    .layout { display:grid; grid-template-columns:360px 1fr; gap:16px; align-items:start; }
-    section, form { background:#fffdf8; border:1px solid #d9d0bf; border-radius:8px; padding:16px; }
-    label { display:grid; gap:6px; margin-bottom:12px; font-size:14px; }
-    input, textarea, select, button { font:inherit; border:1px solid #b8ad9b; border-radius:6px; padding:9px 10px; background:#fff; color:#24211d; }
-    textarea { min-height:260px; resize:vertical; line-height:1.55; }
-    button { cursor:pointer; background:#2e5d50; color:#fff; border-color:#2e5d50; }
-    button.secondary { background:#fff; color:#2e5d50; }
-    .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
-    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-    table { width:100%; border-collapse:collapse; font-size:13px; }
-    th, td { border-bottom:1px solid #e1d8c7; padding:8px; text-align:left; vertical-align:top; }
-    th { background:#ece6d9; position:sticky; top:0; z-index:1; }
-    td input, td select, td textarea { width:100%; min-width:110px; }
-    td textarea { min-height:64px; min-width:360px; }
-    .table-wrap { max-height:560px; overflow:auto; border:1px solid #d9d0bf; border-radius:8px; background:#fff; }
-    .status { min-height:24px; margin-top:10px; color:#5a3c12; }
-    .warning { color:#8a4b00; }
-    code { background:#f3ead9; padding:1px 4px; border-radius:3px; }
-    @media (max-width:900px) { main{padding:16px;} .layout{grid-template-columns:1fr;} .grid{grid-template-columns:1fr;} }
+    :root{color-scheme:light;font-family:"Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;background:#f4f1ea;color:#24211d}*{box-sizing:border-box}body{margin:0}main{max-width:1280px;margin:0 auto;padding:24px}h1{margin:0 0 8px;font-size:28px}h2{margin:0 0 12px;font-size:20px}.version{color:#7a4d00;margin:0 0 16px}.layout{display:grid;grid-template-columns:360px 1fr;gap:16px;align-items:start}section,form{background:#fffdf8;border:1px solid #d9d0bf;border-radius:8px;padding:16px;margin-bottom:16px}label{display:grid;gap:6px;margin-bottom:12px;font-size:14px}input,textarea,select,button{font:inherit;border:1px solid #b8ad9b;border-radius:6px;padding:9px 10px;background:#fff;color:#24211d}textarea{min-height:260px;resize:vertical;line-height:1.55}button{cursor:pointer;background:#2e5d50;color:#fff;border-color:#2e5d50}button.secondary{background:#fff;color:#2e5d50}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #e1d8c7;padding:8px;text-align:left;vertical-align:top}th{background:#ece6d9;position:sticky;top:0;z-index:1}td input,td select,td textarea{width:100%;min-width:110px}td textarea{min-height:64px;min-width:360px}.table-wrap{max-height:560px;overflow:auto;border:1px solid #d9d0bf;border-radius:8px;background:#fff}.status{min-height:24px;margin-top:10px;color:#5a3c12}.warning{color:#8a4b00}.err{color:#9b1c1c;white-space:pre-wrap;min-width:220px}.warn{color:#8a4b00;white-space:pre-wrap;min-width:220px}@media(max-width:900px){main{padding:16px}.layout{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
 <main>
   <h1>da_go corpus input</h1>
-  <p class="version">版本：2026-05-12 excel-utf16le-tsv-only。所有下載匯出統一為 Excel UTF-16LE TSV。若仍看到 JSON/CSV 下載按鈕，請按 Ctrl + F5 強制重新整理。</p>
+  <p class="version">版本：2026-05-12 json-xlsx-v5-mapping。匯出 .JSON 與多工作表 .XLSX，含 stg_Import_Batch、stg_Utterance_Import、Code_Mapping、Metadata。</p>
   <div class="layout">
     <form id="sourceForm">
       <h2>來源與批次</h2>
@@ -49,7 +26,7 @@
       <label>source_url <input name="source_url" value="https://www.goddessfantasy.net/bbs/index.php?topic=132716.0"></label>
       <label>source_file_name <input name="source_file_name" value="dago-chronicle.html"></label>
       <label>輸入 HTML 或文字
-        <textarea id="sourceText" placeholder="貼上論壇列印頁 HTML、純文字團錄，或研究者手動整理內容。若貼上後已是亂碼，先按「修復貼上文字亂碼」。"></textarea>
+        <textarea id="sourceText" placeholder="支援：[00:01:03] GM：你們來到荒廢的祠堂。或 陽月：我想檢查符咒。"></textarea>
       </label>
       <div class="actions">
         <button type="button" id="parseText">解析</button>
@@ -57,253 +34,33 @@
         <button type="button" id="addRow" class="secondary">新增空列</button>
         <button type="button" id="clearRows" class="secondary">清空列</button>
       </div>
-      <div id="status" class="status"></div>
+      <div id="status" class="status">頁面已載入。可貼上文字後按解析。</div>
     </form>
 
-    <section>
-      <h2>stg.Utterance_Import 預覽</h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-          <tr>
-            <th>row</th><th>speaker_type</th><th>speaker_code</th><th>speaker_label_raw</th><th>function</th><th>text</th><th>scene_code</th>
-          </tr>
-          </thead>
-          <tbody id="rows"></tbody>
-        </table>
-      </div>
-      <div class="actions">
-        <button type="button" id="downloadExcelTsv">下載 Excel UTF-16LE TSV</button>
-        <button type="button" id="copyTsv" class="secondary">複製 TSV 文字</button>
-        <button type="button" id="copyJson" class="secondary">複製 JSON 供檢查</button>
-      </div>
-      <p class="status warning">下載檔統一為 UTF-16LE + BOM + TSV，副檔名為 .tsv，可直接用 Excel 開啟。匯入 SQL Server 時請先用 Excel 檢查欄位，再另存或用 SSMS 匯入精靈對應欄位。</p>
-    </section>
+    <div>
+      <section>
+        <h2>Speaker Mapping</h2>
+        <p class="status warning">raw_speaker_label 是逐字稿原始名稱；speaker_code 必須改成 SQL Server 正式表已有的 code，例如 dbo.Team_Member.member_code、dbo.Player_Character.character_code 或 dbo.NPC.npc_code。</p>
+        <div class="actions">
+          <button type="button" id="autoMapping" class="secondary">自動建立 mapping</button>
+          <button type="button" id="addMapping" class="secondary">新增 mapping</button>
+          <button type="button" id="validateBtn">前端驗證</button>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>raw_speaker_label</th><th>speaker_type</th><th>speaker_code</th><th>target_table</th><th>note</th></tr></thead><tbody id="mappingRows"></tbody></table></div>
+      </section>
+
+      <section>
+        <h2>stg.Utterance_Import 預覽</h2>
+        <div class="table-wrap"><table><thead><tr><th>row</th><th>speaker_type</th><th>speaker_code</th><th>speaker_label_raw</th><th>function</th><th>start_timecode</th><th>text</th><th>scene_code</th><th>frontend_error</th><th>frontend_warning</th></tr></thead><tbody id="rows"></tbody></table></div>
+        <div class="actions">
+          <button type="button" id="downloadJson">下載 JSON</button>
+          <button type="button" id="downloadXlsx" class="secondary">下載 XLSX</button>
+        </div>
+        <p class="status warning">JSON 與 XLSX 會同步輸出 metadata、batch、utterance、speaker mapping 與前端驗證資訊。XLSX 可先匯入 stg.Utterance_Import_Xlsx_Raw，再執行轉入程序。</p>
+      </section>
+    </div>
   </div>
 </main>
-
-<script>
-const speakerTypes = ["GM", "PL", "PC", "NPC", "Observer", "Researcher"];
-const functions = ["narration", "dialogue", "action", "rule_check", "decision", "negotiation", "question", "clarification", "conflict", "summary"];
-const exportColumns = [
-  "import_batch_code","import_batch_id","source_row_no","project_code","team_code","session_code","scene_code","turn_no_text","sub_turn_no_text","utterance_code","speaker_type","speaker_code","speaker_label_raw","utterance_function","is_in_character_text","is_gm_narration_text","is_rule_related_text","is_decision_related_text","is_knowledge_related_text","start_timecode","end_timecode","duration_sec_text","utterance_text_raw","utterance_text_clean","utterance_text_verified","language_code","emotion_label","interaction_target_type","interaction_target_code","related_rule_code","related_world_setting_code","related_item_code","ai_summary","ai_annotation_json","human_annotation_note","transcription_confidence_text","review_status","include_in_analysis_text","exclusion_reason","import_status"
-];
-let parsedRows = [];
-const $ = id => document.getElementById(id);
-
-$("parseText").addEventListener("click", parseSource);
-$("repairText").addEventListener("click", repairSourceText);
-$("addRow").addEventListener("click", () => { parsedRows.push(makeRow(parsedRows.length + 1, "", "PC", "", "", "dialogue", "SCN-REVIEW-001")); renderRows(); });
-$("clearRows").addEventListener("click", () => { parsedRows = []; renderRows(); setStatus("已清空。"); });
-$("downloadExcelTsv").addEventListener("click", () => downloadUtf16Le("dago_utterance_import_excel_utf16le.tsv", toTsv(buildExport().stg_Utterance_Import)));
-$("copyTsv").addEventListener("click", () => navigator.clipboard && navigator.clipboard.writeText(toTsv(buildExport().stg_Utterance_Import)));
-$("copyJson").addEventListener("click", () => navigator.clipboard && navigator.clipboard.writeText(JSON.stringify(buildExport(), null, 2)));
-
-function formData() { return Object.fromEntries(new FormData($("sourceForm")).entries()); }
-function setStatus(text) { $("status").textContent = text; }
-
-function parseSource() {
-  const data = formData();
-  const raw = $("sourceText").value.trim();
-  if (!raw) { setStatus("資料不足，需要新資料提供"); return; }
-  const repairedRaw = maybeRepairMojibake(raw);
-  if (repairedRaw !== raw) $("sourceText").value = repairedRaw;
-  const text = htmlToText(repairedRaw);
-  const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line && !isBoilerplate(line));
-  parsedRows = lines.map((line, index) => parseLine(line, index + 1, data));
-  renderRows();
-  setStatus(`已解析 ${parsedRows.length} 列。${repairedRaw !== raw ? "已自動修復常見 UTF-8 亂碼。" : ""}`);
-}
-
-function repairSourceText() {
-  const raw = $("sourceText").value;
-  if (!raw.trim()) { setStatus("資料不足，需要新資料提供"); return; }
-  const fixed = repairUtf8Mojibake(raw);
-  $("sourceText").value = fixed;
-  setStatus(fixed === raw ? "未偵測到可修復的 UTF-8 亂碼。" : "已修復貼上文字中的常見 UTF-8 亂碼，請重新解析。");
-}
-
-function htmlToText(raw) {
-  if (!/<[a-z][\s\S]*>/i.test(raw)) return raw;
-  const doc = new DOMParser().parseFromString(raw, "text/html");
-  doc.querySelectorAll("script,style,noscript").forEach(node => node.remove());
-  doc.querySelectorAll("br").forEach(node => node.replaceWith("\n"));
-  doc.querySelectorAll("p,div,li,blockquote,td,th,h1,h2,h3,h4").forEach(node => node.append("\n"));
-  return doc.body ? doc.body.innerText : raw;
-}
-
-function isBoilerplate(line) { return /^(列印本頁|頁:|作者|主題|«|»|Powered by|SMF|簡體中文|繁體中文)$/i.test(line); }
-function parseLine(line, sourceRowNo) {
-  const match = /^([^:：]{1,40})[:：]\s*(.+)$/.exec(line);
-  const speaker = match ? match[1].trim() : "";
-  const text = match ? match[2].trim() : line;
-  const speakerType = detectSpeakerType(speaker, text);
-  const fn = speakerType === "GM" ? "narration" : "dialogue";
-  return makeRow(sourceRowNo, text, speakerType, detectSpeakerCode(speaker, speakerType), speaker, fn, "SCN-REVIEW-001");
-}
-function detectSpeakerType(speaker, text) {
-  const value = `${speaker} ${text}`;
-  if (/GM|主持|黑大拿|大拿/.test(value)) return "GM";
-  if (/研究|觀察|記錄/.test(value)) return "Researcher";
-  if (!speaker) return "Observer";
-  return "PC";
-}
-function detectSpeakerCode(speaker, type) {
-  if (type === "GM") return "TM-GM";
-  if (type === "Researcher") return "TM-RESEARCHER";
-  if (!speaker) return null;
-  return `PC-${speaker.replace(/\s+/g, "-").slice(0, 30)}`;
-}
-
-function makeRow(sourceRowNo, text, speakerType, speakerCode, speakerLabel, fn, sceneCode) {
-  const data = formData();
-  const repairedText = maybeRepairMojibake(text);
-  return {
-    import_batch_code: data.batch_code,
-    import_batch_id: null,
-    source_row_no: sourceRowNo,
-    project_code: data.project_code,
-    team_code: data.team_code,
-    session_code: data.session_code,
-    scene_code: sceneCode,
-    turn_no_text: String(sourceRowNo),
-    sub_turn_no_text: null,
-    utterance_code: `UTT-${data.session_code}-${String(sourceRowNo).padStart(5, "0")}`.slice(0, 80),
-    speaker_type: speakerType,
-    speaker_code: speakerCode,
-    speaker_label_raw: speakerLabel || null,
-    utterance_function: fn,
-    is_in_character_text: speakerType === "PC" || speakerType === "NPC" ? "1" : "0",
-    is_gm_narration_text: speakerType === "GM" && fn === "narration" ? "1" : "0",
-    is_rule_related_text: fn === "rule_check" ? "1" : "0",
-    is_decision_related_text: ["decision", "negotiation", "clarification"].includes(fn) ? "1" : "0",
-    is_knowledge_related_text: ["question", "clarification", "summary"].includes(fn) ? "1" : "0",
-    start_timecode: null,
-    end_timecode: null,
-    duration_sec_text: null,
-    utterance_text_raw: repairedText,
-    utterance_text_clean: repairedText,
-    utterance_text_verified: null,
-    language_code: "zh-TW",
-    emotion_label: "neutral",
-    interaction_target_type: "unknown",
-    interaction_target_code: null,
-    related_rule_code: null,
-    related_world_setting_code: null,
-    related_item_code: null,
-    ai_summary: null,
-    ai_annotation_json: JSON.stringify({ source_url: data.source_url, source_file_name: data.source_file_name }),
-    human_annotation_note: null,
-    transcription_confidence_text: "1",
-    review_status: "draft",
-    include_in_analysis_text: "1",
-    exclusion_reason: null,
-    import_status: "raw"
-  };
-}
-
-function renderRows() {
-  $("rows").innerHTML = parsedRows.map((row, index) => `
-    <tr data-index="${index}">
-      <td>${row.source_row_no}</td>
-      <td>${selectHtml("speaker_type", row.speaker_type, speakerTypes)}</td>
-      <td><input data-field="speaker_code" value="${esc(row.speaker_code || "")}"></td>
-      <td><input data-field="speaker_label_raw" value="${esc(row.speaker_label_raw || "")}"></td>
-      <td>${selectHtml("utterance_function", row.utterance_function, functions)}</td>
-      <td><textarea data-field="utterance_text_raw">${esc(row.utterance_text_raw || "")}</textarea></td>
-      <td><input data-field="scene_code" value="${esc(row.scene_code || "")}"></td>
-    </tr>
-  `).join("");
-  $("rows").querySelectorAll("input,select,textarea").forEach(input => {
-    input.addEventListener("change", updateRow);
-    input.addEventListener("input", updateRow);
-  });
-}
-function selectHtml(field, value, options) { return `<select data-field="${field}">${options.map(option => `<option value="${option}" ${option === value ? "selected" : ""}>${option}</option>`).join("")}</select>`; }
-function updateRow(event) {
-  const tr = event.target.closest("tr");
-  const row = parsedRows[Number(tr.dataset.index)];
-  row[event.target.dataset.field] = event.target.value || null;
-  if (event.target.dataset.field === "utterance_text_raw") row.utterance_text_clean = row.utterance_text_raw;
-  if (event.target.dataset.field === "speaker_type" || event.target.dataset.field === "utterance_function") {
-    row.is_in_character_text = row.speaker_type === "PC" || row.speaker_type === "NPC" ? "1" : "0";
-    row.is_gm_narration_text = row.speaker_type === "GM" && row.utterance_function === "narration" ? "1" : "0";
-  }
-}
-
-function buildExport() {
-  const data = formData();
-  const rowsForExport = parsedRows.map(row => normalizeExportRow({
-    ...row,
-    utterance_text_raw: maybeRepairMojibake(row.utterance_text_raw),
-    utterance_text_clean: maybeRepairMojibake(row.utterance_text_clean),
-    utterance_text_verified: maybeRepairMojibake(row.utterance_text_verified)
-  }));
-  return {
-    metadata: {
-      export_format: "trpg_corpus_web_input_excel_utf16le_tsv_v1",
-      project_code: data.project_code,
-      team_code: data.team_code,
-      session_code: data.session_code,
-      import_batch_code: data.batch_code,
-      source_url: data.source_url,
-      source_file_name: data.source_file_name,
-      exported_at: new Date().toISOString()
-    },
-    stg_Import_Batch: {
-      batch_code: data.batch_code,
-      project_code: data.project_code,
-      source_table_name: "stg.Utterance_Import",
-      source_file_name: data.source_file_name,
-      source_file_type: "xlsx",
-      import_purpose: "web transcript input",
-      imported_by: "web/dago-corpus-input.html",
-      import_status: "created",
-      total_row_count: rowsForExport.length
-    },
-    stg_Utterance_Import: rowsForExport
-  };
-}
-function normalizeExportRow(row) { const out = {}; exportColumns.forEach(key => out[key] = row[key] == null ? null : row[key]); return out; }
-function toTsv(rows) { return [exportColumns.join("\t")].concat(rows.map(row => exportColumns.map(key => tsvCell(row[key])).join("\t"))).join("\r\n"); }
-function tsvCell(value) { if (value == null) return ""; return String(value).replace(/\t/g, " ").replace(/\r?\n/g, " "); }
-
-function downloadUtf16Le(fileName, text) {
-  const s = String(text);
-  const bytes = new Uint8Array(2 + s.length * 2);
-  bytes[0] = 0xFF; bytes[1] = 0xFE;
-  for (let i = 0; i < s.length; i++) {
-    const code = s.charCodeAt(i);
-    bytes[2 + i * 2] = code & 0xFF;
-    bytes[3 + i * 2] = code >> 8;
-  }
-  triggerDownload(fileName, new Blob([bytes], { type: "text/tab-separated-values;charset=utf-16le" }));
-}
-function triggerDownload(fileName, blob) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}
-
-function maybeRepairMojibake(value) { if (value == null) return value; const text = String(value); return looksLikeUtf8Mojibake(text) ? repairUtf8Mojibake(text) : text; }
-function looksLikeUtf8Mojibake(text) { const s = String(text || ""); return /[ÃÂâ][\s\S]*[\x80-\xBF]|[åæäçèé][\s\S]*[\x80-\xBF]|�/.test(s) || /(?:å|æ|ç|è|é|ä|ã|ï|ð)[\u0080-\u00ff]{1,2}/i.test(s); }
-function repairUtf8Mojibake(text) {
-  const s = String(text == null ? "" : text);
-  try {
-    const bytes = Uint8Array.from(Array.from(s, ch => ch.charCodeAt(0) & 0xff));
-    const decoded = new TextDecoder("utf-8", { fatal:false }).decode(bytes);
-    return scoreReadableChinese(decoded) > scoreReadableChinese(s) ? decoded : s;
-  } catch (_err) { return s; }
-}
-function scoreReadableChinese(text) { const s = String(text || ""); const chinese = (s.match(/[\u4e00-\u9fff]/g) || []).length; const mojibake = (s.match(/[ÃÂâ�]|(?:å|æ|ç|è|é|ä|ã|ï|ð)[\u0080-\u00ff]/g) || []).length; return chinese * 3 - mojibake * 4; }
-function esc(value) { return String(value == null ? "" : value).replace(/[&<>"]/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[char])); }
-
-renderRows();
-</script>
+<script src="assets/dago-corpus-input-v5.js?v=20260512-v5-mapping"></script>
 </body>
 </html>
