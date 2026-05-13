@@ -46,6 +46,8 @@ web/assets/dago-corpus-open-review-v13.js
 web/assets/dago-corpus-input-ops-v13.js
 web/assets/dago-corpus-review-v13.js
 web/assets/dago-corpus-export-v13.js
+web/assets/dago-corpus-xlsx-parts-v13.js
+web/assets/dago-corpus-stress-test-v13.js
 ```
 
 v13 preview active files：
@@ -61,6 +63,8 @@ web/v13-preview/assets/dago-corpus-open-review-v13.js
 web/v13-preview/assets/dago-corpus-input-ops-v13.js
 web/v13-preview/assets/dago-corpus-review-v13.js
 web/v13-preview/assets/dago-corpus-export-v13.js
+web/v13-preview/assets/dago-corpus-xlsx-parts-v13.js
+web/v13-preview/assets/dago-corpus-stress-test-v13.js
 ```
 
 ## 三、目前資料流
@@ -74,6 +78,7 @@ Word .docx
 → dago-corpus-workspace-v13.js
 → IndexedDB workspaces / rows / maps
 → input preview / review page
+→ validation / JSON / TSV / XLSX export
 ```
 
 ## 四、目前已支援功能
@@ -83,7 +88,7 @@ Word .docx
 2. sourceText 解析。
 3. rows 寫入 IndexedDB。
 4. maps 寫入 IndexedDB。
-5. Speaker Mapping 顯示。
+5. Speaker Mapping 顯示與編輯。
 6. stg.Utterance_Import 預覽顯示。
 7. 輸入頁上一頁 / 下一頁。
 8. 審閱頁上一頁 / 下一頁。
@@ -94,21 +99,83 @@ Word .docx
 13. 單列分割。
 14. 單列欄位修改後寫回 IndexedDB。
 15. 清除本機工作區。
+16. JSON 全量匯出。
+17. JSON 分批匯出。
+18. UTF-16LE TSV 全量匯出。
+19. UTF-16LE TSV 分批匯出。
+20. XLSX 四工作表全量匯出。
+21. XLSX 四工作表分批匯出。
+22. 全量前端驗證。
+23. 壓力測試資料產生器。
 ```
 
-## 五、尚未完成
+## 五、分批 XLSX 使用方式
+
+分批 XLSX 由 `dago-corpus-xlsx-parts-v13.js` 接管 `downloadXlsxParts` 按鈕。
 
 ```text
-1. JSON 從 IndexedDB 全量匯出。
-2. XLSX 四工作表從 IndexedDB 全量匯出。
-3. UTF-16LE TSV 從 IndexedDB 全量匯出。
-4. 全量前端驗證。
-5. 匯出前 source_row_no / turn_no_text / utterance_code 最終正規化。
+1. 先匯入 Word 或產生壓力測試資料。
+2. 設定「分批列數」。建議 1000 或 2000。
+3. 按「分批 XLSX」。
+4. 每一批會產生一個 .xlsx。
+5. 每個 .xlsx 都包含四工作表：
+   stg_Import_Batch
+   stg_Utterance_Import
+   Code_Mapping
+   Metadata
 ```
 
-目前 `dago-corpus-export-v13.js` 是佔位腳本，不應視為正式匯出功能。
+分批 XLSX 採全域連續編號：
 
-## 六、檢查各表連線
+```text
+source_row_no：依全工作區連續。
+turn_no_text：依全工作區連續。
+utterance_code：依全工作區連續。
+```
+
+若 partSize 大於 5000，前端會自動改為 5000。大型資料建議使用 1000 或 2000。
+
+## 六、壓力測試流程
+
+輸入頁提供壓力測試資料產生器。
+
+建議測試級距：
+
+```text
+100 rows
+1000 rows
+5000 rows
+10000 rows
+```
+
+測試流程：
+
+```text
+1. 在「壓力測試列數」輸入 100。
+2. 按「產生壓力測試資料」。
+3. 按「前端驗證」。
+4. 按「下載 JSON」。
+5. 按「下載 UTF-16LE TSV」。
+6. 按「下載 XLSX」。
+7. 按「分批 XLSX」。
+8. 重複測試 1000、5000。
+9. 5000 正常後，再測 10000。
+```
+
+驗收標準：
+
+```text
+1. IndexedDB rows 數量正確。
+2. Speaker Mapping 顯示 GM、PC1、PC2、PC3、PC4、PC5。
+3. 前端驗證可完成。
+4. JSON 可下載並含完整 rows。
+5. UTF-16LE TSV 以 Excel 開啟中文不亂碼。
+6. XLSX 可由 Excel 開啟。
+7. 分批 XLSX 每批均含四工作表。
+8. Metadata 可看到 part_no、part_count、row_start、row_end、total_row_count。
+```
+
+## 七、檢查各表連線
 
 在瀏覽器 Console 檢查：
 
@@ -130,7 +197,21 @@ rows > 100 且下一頁可顯示資料：分頁已接上 IndexedDB。
 審閱頁與輸入頁使用同一 workspace_id：跨頁讀取已接上。
 ```
 
-## 七、不得修改項目
+## 八、SSMS 22 匯入前檢查
+
+匯入 SQL Server 前，必須確認：
+
+```text
+1. JSON / XLSX / TSV 的 row_count 與 IndexedDB row_count 一致。
+2. source_row_no 連續。
+3. turn_no_text 連續。
+4. utterance_code 不重複。
+5. speaker_type 僅使用 GM、PL、PC、NPC、Observer、Researcher。
+6. utterance_function 僅使用 narration、dialogue、action、rule_check、decision、negotiation、question、clarification、conflict、summary。
+7. 中文以 Excel 開啟沒有亂碼。
+```
+
+## 九、不得修改項目
 
 ```text
 database/*.sql
