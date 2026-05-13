@@ -6,7 +6,7 @@
 2026-05-12 json-xlsx-v13-indexeddb-large-workspace
 ```
 
-本手冊是 v13 分支與 v13 preview 的工作基準。v13 的目標是將大型逐字稿工作區從 `sessionStorage rows` 改為 IndexedDB 本機工作區。
+本手冊是 v13 分支與 v13 preview 的工作基準。v13 的目標是將大型逐字稿工作區從 `sessionStorage rows` 改為 IndexedDB 本機工作區，並支援 Large Mode 分批解析、分批寫入與分批 cursor 匯出。
 
 ## 一、版本號檢查規則
 
@@ -47,6 +47,7 @@ web/assets/dago-corpus-input-ops-v13.js
 web/assets/dago-corpus-review-v13.js
 web/assets/dago-corpus-export-v13.js
 web/assets/dago-corpus-xlsx-parts-v13.js
+web/assets/dago-corpus-large-import-v13.js
 web/assets/dago-corpus-stress-test-v13.js
 web/assets/dago-corpus-help-v13.js
 ```
@@ -65,6 +66,7 @@ web/v13-preview/assets/dago-corpus-input-ops-v13.js
 web/v13-preview/assets/dago-corpus-review-v13.js
 web/v13-preview/assets/dago-corpus-export-v13.js
 web/v13-preview/assets/dago-corpus-xlsx-parts-v13.js
+web/v13-preview/assets/dago-corpus-large-import-v13.js
 web/v13-preview/assets/dago-corpus-stress-test-v13.js
 web/v13-preview/assets/dago-corpus-help-v13.js
 ```
@@ -72,17 +74,16 @@ web/v13-preview/assets/dago-corpus-help-v13.js
 ## 三、目前資料流
 
 ```text
-Word .docx
-→ dago-corpus-docx-v13.js
+Word .docx / raw transcript
 → sourceText
-→ dago-corpus-parser-v13.js
-→ rows / maps
-→ dago-corpus-workspace-v13.js
+→ parser
+→ Large Mode 判斷
+→ appendRowsChunk()
 → IndexedDB workspaces / rows / maps
 → input preview / review page
-→ validation / JSON / TSV / XLSX export
+→ JSON / UTF-16LE TSV / XLSX cursor chunk export
 → SSMS 22 匯入 stg.Utterance_Import / stg.Import_Batch
-→ 查核
+→ T-SQL 查核
 → dbo.Utterance
 ```
 
@@ -105,11 +106,11 @@ Word .docx
 14. 單列欄位修改後寫回 IndexedDB。
 15. 清除本機工作區。
 16. JSON 全量匯出。
-17. JSON 分批匯出。
+17. JSON cursor 分批匯出。
 18. UTF-16LE TSV 全量匯出。
-19. UTF-16LE TSV 分批匯出。
+19. UTF-16LE TSV cursor 分批匯出。
 20. XLSX 四工作表全量匯出。
-21. XLSX 四工作表分批匯出。
+21. XLSX 四工作表 cursor 分批匯出。
 22. 全量前端驗證。
 23. 壓力測試資料產生器。
 24. 未閉合括號 action/dialogue segment 解析。
@@ -118,190 +119,141 @@ Word .docx
 27. IndexedDB cursor 分頁。
 28. IndexedDB cursor iterator。
 29. 單列文字修改使用 parser cleanText / annotation，不再回退到舊清洗邏輯。
+30. Large Mode：超過 5000 rows 自動分批解析與寫入。
+31. 壓力測試資料分批寫入，避免測試器本身造成卡頓。
 ```
 
-## 五、IndexedDB 大量資料效能改善
+## 五、Large Mode 行為
 
-本輪維持版本號不變，修改重點如下：
+Large Mode 由 `dago-corpus-large-import-v13.js` 提供。
+
+啟動條件：
 
 ```text
-1. getRowCount() 改為 IndexedDB index count。
-2. getRowsPage() 改為 cursor 分頁。
-3. iterateRows() 改為 cursor iterator。
-4. getSpeakerCounts() 新增 speaker 計數 API。
-5. Speaker filter 改用 getSpeakerCounts()。
-6. updateRowByNo() 改用 workspace.updateRow() 局部更新。
-7. 修改 utterance_text_raw 時統一使用 parser cleanText / annotation / warn。
+預估 rows > 5000
 ```
 
-仍保留的限制：
+固定參數：
 
 ```text
-1. 插入、刪除、分割仍會重新排序與重寫 rows，因為目前仍以 source_row_no 作為 row key。
-2. 分批 JSON / TSV / XLSX 雖然能分批輸出檔案，但部分流程仍會先建立 rows 陣列。
-3. 若要完全大型化，後續應引入 stable row_id 與 row_order gap 策略。
+LARGE_THRESHOLD = 5000
+PARSE_CHUNK_SIZE = 500
+WRITE_CHUNK_SIZE = 500
 ```
 
-## 六、action/dialogue segment 解析
-
-`dago-corpus-parser-v13.js` 使用 `splitActionDialogueSegmentsV13()` 判斷括號動作與對白。
-
-若原文是：
+行為：
 
 ```text
-(看著李遠汗流浹背的樣子，知道他已經很辛苦了，有點生氣地道
-災厄，不許你胡說。
+1. 不一次建立完整 rows 陣列。
+2. 每 500 rows 寫入 IndexedDB 一次。
+3. 每批寫入後釋放該批 rows。
+4. status 顯示目前寫入進度。
+5. 匯入完成後只刷新第一頁預覽。
+6. Speaker Mapping 以 Map 累積，完成後一次寫入 maps store。
+7. Word .docx 匯入會自動使用同一個 parser API，因此大型 DOCX 也會走 Large Mode。
 ```
 
-預期寫入 `ai_annotation_json`：
+## 六、50000 rows 壓力測試流程
 
-```json
-{
-  "segments": [
-    { "type": "action", "text": "看著李遠汗流浹背的樣子，知道他已經很辛苦了，有點生氣地道" },
-    { "type": "dialogue", "text": "災厄，不許你胡說。" }
-  ],
-  "has_unclosed_action": true,
-  "split_by_speech_cue": true
-}
-```
+輸入頁提供壓力測試資料產生器。壓力測試產生器已改為 chunked write，不再一次建立完整 rows 後寫入。
 
-`utterance_text_clean` 仍保留純文字，不加入「動作」或「對白」標籤。細部分段以 `ai_annotation_json.segments` 為準。
-
-## 七、欄位中英對照面板
-
-`dago-corpus-help-v13.js` 會在前端加入「欄位中英對照」按鈕。
-
-顯示區域：
+測試級距：
 
 ```text
-1. Speaker Mapping
-2. stg.Utterance_Import 預覽
-3. stg.Utterance_Import 審閱工作頁
-```
-
-用途：
-
-```text
-1. 顯示欄位英文名稱。
-2. 顯示中文名稱。
-3. 顯示用途。
-4. 顯示 utterance_function 的英文代碼、中文名稱與用途。
-```
-
-此面板不寫入 IndexedDB，不修改 JSON / XLSX / TSV 匯出欄位，也不修改 SQL Server 表。
-
-## 八、分批 XLSX 使用方式
-
-分批 XLSX 由 `dago-corpus-xlsx-parts-v13.js` 接管 `downloadXlsxParts` 按鈕。
-
-```text
-1. 先匯入 Word 或產生壓力測試資料。
-2. 設定「分批列數」。建議 1000 或 2000。
-3. 按「分批 XLSX」。
-4. 每一批會產生一個 .xlsx。
-5. 每個 .xlsx 都包含四工作表：
-   stg_Import_Batch
-   stg_Utterance_Import
-   Code_Mapping
-   Metadata
-```
-
-分批 XLSX 採全域連續編號：
-
-```text
-source_row_no：依全工作區連續。
-turn_no_text：依全工作區連續。
-utterance_code：依全工作區連續。
-```
-
-若 partSize 大於 5000，前端會自動改為 5000。大型資料建議使用 1000 或 2000。
-
-## 九、壓力測試流程
-
-輸入頁提供壓力測試資料產生器。
-
-建議測試級距：
-
-```text
-100 rows
-1000 rows
-5000 rows
 10000 rows
+30000 rows
+50000 rows
 ```
 
 測試流程：
 
 ```text
-1. 在「壓力測試列數」輸入 100。
-2. 按「產生壓力測試資料」。
-3. 按「前端驗證」。
-4. 按「下載 JSON」。
-5. 按「下載 UTF-16LE TSV」。
-6. 按「下載 XLSX」。
-7. 按「分批 XLSX」。
-8. 重複測試 1000、5000。
-9. 5000 正常後，再測 10000。
+1. 強制重新整理 v13 preview input 頁。
+2. 按「清除本機工作區」。
+3. 在「壓力測試列數」輸入 10000。
+4. 按「產生壓力測試資料」。
+5. 等待 status 顯示完成。
+6. 測試上一頁 / 下一頁。
+7. 測試 speaker filter。
+8. 設定分批列數為 1000。
+9. 下載分批 JSON。
+10. 下載分批 UTF-16LE TSV。
+11. 下載分批 XLSX。
+12. 重複 30000 rows。
+13. 30000 成功後再測 50000 rows。
 ```
 
 驗收標準：
 
 ```text
-1. IndexedDB rows 數量正確。
-2. Speaker Mapping 顯示 GM、PC1、PC2、PC3、PC4、PC5。
-3. 前端驗證可完成。
-4. JSON 可下載並含完整 rows。
-5. UTF-16LE TSV 以 Excel 開啟中文不亂碼。
-6. XLSX 可由 Excel 開啟。
-7. 分批 XLSX 每批均含四工作表。
-8. Metadata 可看到 part_no、part_count、row_start、row_end、total_row_count。
+1. 產生資料期間 status 持續更新，不長時間停住。
+2. 10000 / 30000 / 50000 rows 完成後 rowSummary 與 IndexedDB rows 數一致。
+3. 第一頁可顯示。
+4. 下一頁可顯示。
+5. speaker filter 可切換。
+6. 分批 JSON / TSV / XLSX 可下載。
+7. TSV 用 Excel 開啟中文不亂碼。
+8. 分批 XLSX 每批有四工作表：stg_Import_Batch、stg_Utterance_Import、Code_Mapping、Metadata。
 ```
 
-## 十、SSMS 22 連接與匯入可行度
+## 七、匯出建議
 
-目前 GitHub Pages 靜態 HTML 不能直接安全連線到本機 SQL Server 或遠端 SQL Server。原因是瀏覽器端不能直接載入 SQL Server Native Client，也不能安全保存 SQL Server 帳號密碼。
-
-目前可行方案：
+小型資料：
 
 ```text
-方案 A：前端匯出 JSON / XLSX / UTF-16LE TSV，研究者用 SSMS 22 匯入。
-可行度：高。
-目前 v13 已支援。
-
-方案 B：本機 Node.js / .NET 匯入工具讀取 JSON，再寫入 SQL Server。
-可行度：高。
-需要新增本機匯入器，不應放在 GitHub Pages 上。
-
-方案 C：後端 API 服務連 SQL Server，HTML 前端呼叫 API。
-可行度：中高。
-需要伺服器、驗證、權限控管、CORS 與資料備份策略。
-
-方案 D：GitHub Pages HTML 直接連 SQL Server。
-可行度：低。
-不建議，也不安全。
+1000 rows 以下：JSON / TSV / XLSX 皆可。
 ```
 
-建議研究流程仍採方案 A 作為正式研究資料管線：
+中型資料：
+
+```text
+1000–5000 rows：JSON / TSV 優先，XLSX 可用。
+```
+
+大型資料：
+
+```text
+5000 rows 以上：使用分批 JSON / 分批 TSV / 分批 XLSX。
+```
+
+超大型資料：
+
+```text
+30000–50000 rows：優先使用分批 JSON 或分批 UTF-16LE TSV；XLSX 僅作人工審閱輔助。
+```
+
+## 八、仍保留的限制
+
+```text
+1. 新增、刪除、分割仍會重排 rows，50,000 rows 下不建議頻繁操作。
+2. 若要完全大型化，後續應導入 stable row_id 與 row_order gap 策略。
+3. 全量 XLSX 不建議用於 50,000 rows。
+4. 瀏覽器 IndexedDB 可用空間依瀏覽器與裝置政策而不同。
+```
+
+## 九、SSMS 22 連接與匯入可行度
+
+GitHub Pages 靜態 HTML 不應直接連 SQL Server。正式流程仍建議：
 
 ```text
 HTML v13
-→ JSON / XLSX / UTF-16LE TSV
+→ 分批 JSON / 分批 UTF-16LE TSV
 → SSMS 22 匯入 stg.Utterance_Import / stg.Import_Batch
 → T-SQL 查核
 → dbo.Utterance
 ```
 
-若後續要做到「一鍵送入 SQL Server」，建議使用方案 B 或 C，並要求：
+50,000 rows 對 SQL Server 本身不是問題，重點在前端匯出與匯入分批。建議每批：
 
 ```text
-1. SQL Server 連線字串只存在本機或後端，不進入 HTML。
-2. 匯入前自動備份。
-3. 只寫入 stg schema。
-4. 不直接寫 dbo.Utterance。
-5. 匯入後用 T-SQL 查核程序轉正式表。
+JSON：1000–5000 rows / file
+TSV：1000–5000 rows / file
+XLSX：1000 rows / file
 ```
 
-## 十一、SSMS 22 匯入前檢查
+若後續要一鍵送入 SQL Server，建議另建本機 Node.js / .NET 匯入器，且只寫入 `stg` schema，不直接寫入 `dbo.Utterance`。
+
+## 十、SSMS 22 匯入前檢查
 
 匯入 SQL Server 前，必須確認：
 
@@ -315,7 +267,7 @@ HTML v13
 7. 中文以 Excel 開啟沒有亂碼。
 ```
 
-## 十二、不得修改項目
+## 十一、不得修改項目
 
 ```text
 database/*.sql
