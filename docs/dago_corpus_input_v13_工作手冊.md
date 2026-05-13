@@ -49,6 +49,7 @@ web/assets/dago-corpus-export-v13.js
 web/assets/dago-corpus-xlsx-parts-v13.js
 web/assets/dago-corpus-large-import-v13.js
 web/assets/dago-corpus-stress-test-v13.js
+web/assets/dago-corpus-mapping-validation-v13.js
 web/assets/dago-corpus-help-v13.js
 ```
 
@@ -68,6 +69,7 @@ web/v13-preview/assets/dago-corpus-export-v13.js
 web/v13-preview/assets/dago-corpus-xlsx-parts-v13.js
 web/v13-preview/assets/dago-corpus-large-import-v13.js
 web/v13-preview/assets/dago-corpus-stress-test-v13.js
+web/v13-preview/assets/dago-corpus-mapping-validation-v13.js
 web/v13-preview/assets/dago-corpus-help-v13.js
 ```
 
@@ -81,6 +83,7 @@ Word .docx / raw transcript
 → appendRowsChunk()
 → IndexedDB workspaces / rows / maps
 → input preview / review page
+→ 點選前端驗證時執行 Speaker Mapping cursor validation
 → JSON / UTF-16LE TSV / XLSX cursor chunk export
 → SSMS 22 匯入 stg.Utterance_Import / stg.Import_Batch
 → T-SQL 查核
@@ -111,7 +114,7 @@ Word .docx / raw transcript
 19. UTF-16LE TSV cursor 分批匯出。
 20. XLSX 四工作表全量匯出。
 21. XLSX 四工作表 cursor 分批匯出。
-22. 全量前端驗證。
+22. 點選前端驗證時執行 cursor 全量驗證。
 23. 壓力測試資料產生器。
 24. 未閉合括號 action/dialogue segment 解析。
 25. Speaker Mapping 與 stg.Utterance_Import 欄位中英對照面板。
@@ -121,6 +124,8 @@ Word .docx / raw transcript
 29. 單列文字修改使用 parser cleanText / annotation，不再回退到舊清洗邏輯。
 30. Large Mode：超過 5000 rows 自動分批解析與寫入。
 31. 壓力測試資料分批寫入，避免測試器本身造成卡頓。
+32. Speaker Mapping 驗證只在點選「前端驗證」時執行，結果寫回 frontend_validation_error / frontend_validation_warning。
+33. 「套用 Speaker Mapping」會以 cursor 逐列更新 speaker_type / speaker_code，不全量重寫 rows。
 ```
 
 ## 五、Large Mode 行為
@@ -153,7 +158,55 @@ WRITE_CHUNK_SIZE = 500
 7. Word .docx 匯入會自動使用同一個 parser API，因此大型 DOCX 也會走 Large Mode。
 ```
 
-## 六、50000 rows 壓力測試流程
+## 六、Speaker Mapping 前端驗證
+
+`dago-corpus-mapping-validation-v13.js` 會接管「前端驗證」與「套用 Speaker Mapping」。
+
+驗證執行時機：
+
+```text
+只有點選「前端驗證」時才執行 cursor 全量查詢。
+一般換頁、輸入、匯出、開啟審閱頁不會自動掃描全 workspace rows。
+```
+
+驗證內容：
+
+```text
+1. 每列 speaker_label_raw 是否能找到 mapping。
+2. speaker_code 是否與 mapping.speaker_code 一致。
+3. speaker_type 是否與 mapping.speaker_type 一致。
+4. target_table 是否符合 speaker_type：
+   GM / PL / Observer / Researcher → Team_Member
+   PC → Player_Character
+   NPC → NPC
+5. project_code / team_code / session_code 必填。
+6. speaker_type 合法值。
+7. utterance_function 合法值。
+8. utterance_text_raw 不可空。
+9. ai_annotation_json 必須是合法 JSON。
+```
+
+驗證結果：
+
+```text
+1. 錯誤寫回 frontend_validation_error。
+2. 警告寫回 frontend_validation_warning。
+3. 寫回採用 cursor 逐列 updateRow。
+4. 寫回完成後 refresh 當前頁，預覽表直接顯示錯誤與警告。
+```
+
+「套用 Speaker Mapping」行為：
+
+```text
+1. 先保存目前 Speaker Mapping 表格。
+2. 使用 cursor 掃描 rows。
+3. 依 speaker_label_raw 找 mapping。
+4. 逐列更新 speaker_type / speaker_code。
+5. 不使用 getAllRows() 全量重寫。
+6. 完成後提示 scanned / updated / missing_mapping。
+```
+
+## 七、50000 rows 壓力測試流程
 
 輸入頁提供壓力測試資料產生器。壓力測試產生器已改為 chunked write，不再一次建立完整 rows 後寫入。
 
@@ -175,12 +228,14 @@ WRITE_CHUNK_SIZE = 500
 5. 等待 status 顯示完成。
 6. 測試上一頁 / 下一頁。
 7. 測試 speaker filter。
-8. 設定分批列數為 1000。
-9. 下載分批 JSON。
-10. 下載分批 UTF-16LE TSV。
-11. 下載分批 XLSX。
-12. 重複 30000 rows。
-13. 30000 成功後再測 50000 rows。
+8. 按「前端驗證」。
+9. 確認 frontend_validation_error / frontend_validation_warning 顯示於預覽表。
+10. 設定分批列數為 1000。
+11. 下載分批 JSON。
+12. 下載分批 UTF-16LE TSV。
+13. 下載分批 XLSX。
+14. 重複 30000 rows。
+15. 30000 成功後再測 50000 rows。
 ```
 
 驗收標準：
@@ -191,12 +246,14 @@ WRITE_CHUNK_SIZE = 500
 3. 第一頁可顯示。
 4. 下一頁可顯示。
 5. speaker filter 可切換。
-6. 分批 JSON / TSV / XLSX 可下載。
-7. TSV 用 Excel 開啟中文不亂碼。
-8. 分批 XLSX 每批有四工作表：stg_Import_Batch、stg_Utterance_Import、Code_Mapping、Metadata。
+6. 前端驗證只在點選時執行。
+7. 前端驗證結果寫回每列 frontend_validation_error / frontend_validation_warning。
+8. 分批 JSON / TSV / XLSX 可下載。
+9. TSV 用 Excel 開啟中文不亂碼。
+10. 分批 XLSX 每批有四工作表：stg_Import_Batch、stg_Utterance_Import、Code_Mapping、Metadata。
 ```
 
-## 七、匯出建議
+## 八、匯出建議
 
 小型資料：
 
@@ -222,7 +279,7 @@ WRITE_CHUNK_SIZE = 500
 30000–50000 rows：優先使用分批 JSON 或分批 UTF-16LE TSV；XLSX 僅作人工審閱輔助。
 ```
 
-## 八、仍保留的限制
+## 九、仍保留的限制
 
 ```text
 1. 新增、刪除、分割仍會重排 rows，50,000 rows 下不建議頻繁操作。
@@ -231,7 +288,7 @@ WRITE_CHUNK_SIZE = 500
 4. 瀏覽器 IndexedDB 可用空間依瀏覽器與裝置政策而不同。
 ```
 
-## 九、SSMS 22 連接與匯入可行度
+## 十、SSMS 22 連接與匯入可行度
 
 GitHub Pages 靜態 HTML 不應直接連 SQL Server。正式流程仍建議：
 
@@ -253,7 +310,7 @@ XLSX：1000 rows / file
 
 若後續要一鍵送入 SQL Server，建議另建本機 Node.js / .NET 匯入器，且只寫入 `stg` schema，不直接寫入 `dbo.Utterance`。
 
-## 十、SSMS 22 匯入前檢查
+## 十一、SSMS 22 匯入前檢查
 
 匯入 SQL Server 前，必須確認：
 
@@ -267,7 +324,7 @@ XLSX：1000 rows / file
 7. 中文以 Excel 開啟沒有亂碼。
 ```
 
-## 十一、不得修改項目
+## 十二、不得修改項目
 
 ```text
 database/*.sql
