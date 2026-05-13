@@ -48,6 +48,7 @@ web/assets/dago-corpus-review-v13.js
 web/assets/dago-corpus-export-v13.js
 web/assets/dago-corpus-xlsx-parts-v13.js
 web/assets/dago-corpus-stress-test-v13.js
+web/assets/dago-corpus-help-v13.js
 ```
 
 v13 preview active files：
@@ -65,6 +66,7 @@ web/v13-preview/assets/dago-corpus-review-v13.js
 web/v13-preview/assets/dago-corpus-export-v13.js
 web/v13-preview/assets/dago-corpus-xlsx-parts-v13.js
 web/v13-preview/assets/dago-corpus-stress-test-v13.js
+web/v13-preview/assets/dago-corpus-help-v13.js
 ```
 
 ## 三、目前資料流
@@ -107,9 +109,60 @@ Word .docx
 21. XLSX 四工作表分批匯出。
 22. 全量前端驗證。
 23. 壓力測試資料產生器。
+24. 未閉合括號 action/dialogue segment 解析。
+25. Speaker Mapping 與 stg.Utterance_Import 欄位中英對照面板。
 ```
 
-## 五、分批 XLSX 使用方式
+## 五、action/dialogue segment 解析
+
+`dago-corpus-parser-v13.js` 使用 `splitActionDialogueSegmentsV13()` 判斷括號動作與對白。
+
+若原文是：
+
+```text
+(看著李遠汗流浹背的樣子，知道他已經很辛苦了，有點生氣地道
+災厄，不許你胡說。
+```
+
+預期寫入 `ai_annotation_json`：
+
+```json
+{
+  "segments": [
+    { "type": "action", "text": "看著李遠汗流浹背的樣子，知道他已經很辛苦了，有點生氣地道" },
+    { "type": "dialogue", "text": "災厄，不許你胡說。" }
+  ],
+  "has_unclosed_action": true,
+  "split_by_speech_cue": true
+}
+```
+
+`utterance_text_clean` 仍保留純文字，不加入「動作」或「對白」標籤。細部分段以 `ai_annotation_json.segments` 為準。
+
+## 六、欄位中英對照面板
+
+`dago-corpus-help-v13.js` 會在前端加入「欄位中英對照」按鈕。
+
+顯示區域：
+
+```text
+1. Speaker Mapping
+2. stg.Utterance_Import 預覽
+3. stg.Utterance_Import 審閱工作頁
+```
+
+用途：
+
+```text
+1. 顯示欄位英文名稱。
+2. 顯示中文名稱。
+3. 顯示用途。
+4. 顯示 utterance_function 的英文代碼、中文名稱與用途。
+```
+
+此面板不寫入 IndexedDB，不修改 JSON / XLSX / TSV 匯出欄位，也不修改 SQL Server 表。
+
+## 七、分批 XLSX 使用方式
 
 分批 XLSX 由 `dago-corpus-xlsx-parts-v13.js` 接管 `downloadXlsxParts` 按鈕。
 
@@ -135,7 +188,7 @@ utterance_code：依全工作區連續。
 
 若 partSize 大於 5000，前端會自動改為 5000。大型資料建議使用 1000 或 2000。
 
-## 六、壓力測試流程
+## 八、壓力測試流程
 
 輸入頁提供壓力測試資料產生器。
 
@@ -175,7 +228,7 @@ utterance_code：依全工作區連續。
 8. Metadata 可看到 part_no、part_count、row_start、row_end、total_row_count。
 ```
 
-## 七、檢查各表連線
+## 九、檢查各表連線
 
 在瀏覽器 Console 檢查：
 
@@ -197,7 +250,7 @@ rows > 100 且下一頁可顯示資料：分頁已接上 IndexedDB。
 審閱頁與輸入頁使用同一 workspace_id：跨頁讀取已接上。
 ```
 
-## 八、SSMS 22 匯入前檢查
+## 十、SSMS 22 匯入前檢查
 
 匯入 SQL Server 前，必須確認：
 
@@ -211,7 +264,7 @@ rows > 100 且下一頁可顯示資料：分頁已接上 IndexedDB。
 7. 中文以 Excel 開啟沒有亂碼。
 ```
 
-## 九、不得修改項目
+## 十一、不得修改項目
 
 ```text
 database/*.sql
