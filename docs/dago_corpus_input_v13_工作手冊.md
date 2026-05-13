@@ -81,6 +81,9 @@ Word .docx
 → IndexedDB workspaces / rows / maps
 → input preview / review page
 → validation / JSON / TSV / XLSX export
+→ SSMS 22 匯入 stg.Utterance_Import / stg.Import_Batch
+→ 查核
+→ dbo.Utterance
 ```
 
 ## 四、目前已支援功能
@@ -111,9 +114,35 @@ Word .docx
 23. 壓力測試資料產生器。
 24. 未閉合括號 action/dialogue segment 解析。
 25. Speaker Mapping 與 stg.Utterance_Import 欄位中英對照面板。
+26. IndexedDB cursor 計數。
+27. IndexedDB cursor 分頁。
+28. IndexedDB cursor iterator。
+29. 單列文字修改使用 parser cleanText / annotation，不再回退到舊清洗邏輯。
 ```
 
-## 五、action/dialogue segment 解析
+## 五、IndexedDB 大量資料效能改善
+
+本輪維持版本號不變，修改重點如下：
+
+```text
+1. getRowCount() 改為 IndexedDB index count。
+2. getRowsPage() 改為 cursor 分頁。
+3. iterateRows() 改為 cursor iterator。
+4. getSpeakerCounts() 新增 speaker 計數 API。
+5. Speaker filter 改用 getSpeakerCounts()。
+6. updateRowByNo() 改用 workspace.updateRow() 局部更新。
+7. 修改 utterance_text_raw 時統一使用 parser cleanText / annotation / warn。
+```
+
+仍保留的限制：
+
+```text
+1. 插入、刪除、分割仍會重新排序與重寫 rows，因為目前仍以 source_row_no 作為 row key。
+2. 分批 JSON / TSV / XLSX 雖然能分批輸出檔案，但部分流程仍會先建立 rows 陣列。
+3. 若要完全大型化，後續應引入 stable row_id 與 row_order gap 策略。
+```
+
+## 六、action/dialogue segment 解析
 
 `dago-corpus-parser-v13.js` 使用 `splitActionDialogueSegmentsV13()` 判斷括號動作與對白。
 
@@ -139,7 +168,7 @@ Word .docx
 
 `utterance_text_clean` 仍保留純文字，不加入「動作」或「對白」標籤。細部分段以 `ai_annotation_json.segments` 為準。
 
-## 六、欄位中英對照面板
+## 七、欄位中英對照面板
 
 `dago-corpus-help-v13.js` 會在前端加入「欄位中英對照」按鈕。
 
@@ -162,7 +191,7 @@ Word .docx
 
 此面板不寫入 IndexedDB，不修改 JSON / XLSX / TSV 匯出欄位，也不修改 SQL Server 表。
 
-## 七、分批 XLSX 使用方式
+## 八、分批 XLSX 使用方式
 
 分批 XLSX 由 `dago-corpus-xlsx-parts-v13.js` 接管 `downloadXlsxParts` 按鈕。
 
@@ -188,7 +217,7 @@ utterance_code：依全工作區連續。
 
 若 partSize 大於 5000，前端會自動改為 5000。大型資料建議使用 1000 或 2000。
 
-## 八、壓力測試流程
+## 九、壓力測試流程
 
 輸入頁提供壓力測試資料產生器。
 
@@ -228,29 +257,51 @@ utterance_code：依全工作區連續。
 8. Metadata 可看到 part_no、part_count、row_start、row_end、total_row_count。
 ```
 
-## 九、檢查各表連線
+## 十、SSMS 22 連接與匯入可行度
 
-在瀏覽器 Console 檢查：
+目前 GitHub Pages 靜態 HTML 不能直接安全連線到本機 SQL Server 或遠端 SQL Server。原因是瀏覽器端不能直接載入 SQL Server Native Client，也不能安全保存 SQL Server 帳號密碼。
 
-```javascript
-const id = DagoCorpusWorkspaceV13.getCurrentWorkspaceId();
-const rows = await DagoCorpusWorkspaceV13.getAllRows(id);
-const maps = await DagoCorpusWorkspaceV13.getAllMaps(id);
-console.log(id, rows.length, maps.length);
-console.log(document.querySelectorAll('#rows tr').length);
-console.log(document.querySelectorAll('#mappingRows tr').length);
-```
-
-判斷：
+目前可行方案：
 
 ```text
-rows > 0 且 #rows tr > 0：stg.Utterance_Import 預覽已接上。
-maps > 0 且 #mappingRows tr > 0：Speaker Mapping 已接上。
-rows > 100 且下一頁可顯示資料：分頁已接上 IndexedDB。
-審閱頁與輸入頁使用同一 workspace_id：跨頁讀取已接上。
+方案 A：前端匯出 JSON / XLSX / UTF-16LE TSV，研究者用 SSMS 22 匯入。
+可行度：高。
+目前 v13 已支援。
+
+方案 B：本機 Node.js / .NET 匯入工具讀取 JSON，再寫入 SQL Server。
+可行度：高。
+需要新增本機匯入器，不應放在 GitHub Pages 上。
+
+方案 C：後端 API 服務連 SQL Server，HTML 前端呼叫 API。
+可行度：中高。
+需要伺服器、驗證、權限控管、CORS 與資料備份策略。
+
+方案 D：GitHub Pages HTML 直接連 SQL Server。
+可行度：低。
+不建議，也不安全。
 ```
 
-## 十、SSMS 22 匯入前檢查
+建議研究流程仍採方案 A 作為正式研究資料管線：
+
+```text
+HTML v13
+→ JSON / XLSX / UTF-16LE TSV
+→ SSMS 22 匯入 stg.Utterance_Import / stg.Import_Batch
+→ T-SQL 查核
+→ dbo.Utterance
+```
+
+若後續要做到「一鍵送入 SQL Server」，建議使用方案 B 或 C，並要求：
+
+```text
+1. SQL Server 連線字串只存在本機或後端，不進入 HTML。
+2. 匯入前自動備份。
+3. 只寫入 stg schema。
+4. 不直接寫 dbo.Utterance。
+5. 匯入後用 T-SQL 查核程序轉正式表。
+```
+
+## 十一、SSMS 22 匯入前檢查
 
 匯入 SQL Server 前，必須確認：
 
@@ -264,7 +315,7 @@ rows > 100 且下一頁可顯示資料：分頁已接上 IndexedDB。
 7. 中文以 Excel 開啟沒有亂碼。
 ```
 
-## 十一、不得修改項目
+## 十二、不得修改項目
 
 ```text
 database/*.sql
