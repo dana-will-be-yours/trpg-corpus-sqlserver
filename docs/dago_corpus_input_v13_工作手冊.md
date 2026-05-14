@@ -126,6 +126,7 @@ Word .docx / raw transcript
 31. 壓力測試資料分批寫入，避免測試器本身造成卡頓。
 32. Speaker Mapping 驗證只在點選「前端驗證」時執行，結果寫回 frontend_validation_error / frontend_validation_warning。
 33. 「套用 Speaker Mapping」會以 cursor 逐列更新 speaker_type / speaker_code，不全量重寫 rows。
+34. Speaker Mapping 驗證與套用已改為同一個 readwrite cursor transaction 內 cursor.update()，避免 cursor 迭代中 await 另一個 IndexedDB transaction 導致停住。
 ```
 
 ## 五、Large Mode 行為
@@ -191,7 +192,7 @@ WRITE_CHUNK_SIZE = 500
 ```text
 1. 錯誤寫回 frontend_validation_error。
 2. 警告寫回 frontend_validation_warning。
-3. 寫回採用 cursor 逐列 updateRow。
+3. 寫回採用同一個 readwrite cursor transaction 的 cursor.update()。
 4. 寫回完成後 refresh 當前頁，預覽表直接顯示錯誤與警告。
 ```
 
@@ -199,11 +200,12 @@ WRITE_CHUNK_SIZE = 500
 
 ```text
 1. 先保存目前 Speaker Mapping 表格。
-2. 使用 cursor 掃描 rows。
+2. 使用 readwrite cursor 掃描 rows。
 3. 依 speaker_label_raw 找 mapping。
-4. 逐列更新 speaker_type / speaker_code。
+4. 使用 cursor.update() 逐列更新 speaker_type / speaker_code。
 5. 不使用 getAllRows() 全量重寫。
-6. 完成後提示 scanned / updated / missing_mapping。
+6. 不在 cursor transaction 中 await 另一個 updateRow transaction。
+7. 完成後提示 scanned / updated / missing_mapping。
 ```
 
 ## 七、50000 rows 壓力測試流程
@@ -229,13 +231,14 @@ WRITE_CHUNK_SIZE = 500
 6. 測試上一頁 / 下一頁。
 7. 測試 speaker filter。
 8. 按「前端驗證」。
-9. 確認 frontend_validation_error / frontend_validation_warning 顯示於預覽表。
-10. 設定分批列數為 1000。
-11. 下載分批 JSON。
-12. 下載分批 UTF-16LE TSV。
-13. 下載分批 XLSX。
-14. 重複 30000 rows。
-15. 30000 成功後再測 50000 rows。
+9. 確認 status 從「讀取 rows」推進到每 500 rows 進度，最後顯示「前端驗證完成」。
+10. 確認 frontend_validation_error / frontend_validation_warning 顯示於預覽表。
+11. 設定分批列數為 1000。
+12. 下載分批 JSON。
+13. 下載分批 UTF-16LE TSV。
+14. 下載分批 XLSX。
+15. 重複 30000 rows。
+16. 30000 成功後再測 50000 rows。
 ```
 
 驗收標準：
