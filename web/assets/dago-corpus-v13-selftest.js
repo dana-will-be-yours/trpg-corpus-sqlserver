@@ -24,6 +24,7 @@ async function run(){
   assert(mappingValidation,'DagoCorpusMappingValidationV13 missing');
   const previousWorkspaceId=workspace.getCurrentWorkspaceId?workspace.getCurrentWorkspaceId():null;
   let ws=null;
+  let passed=false;
   try{
     assert(core.UTT_FIELDS&&core.UTT_FIELDS.includes('utterance_text_raw'),'UTT_FIELDS missing utterance_text_raw');
     assert(core.MAP_FIELDS&&core.MAP_FIELDS.includes('raw_speaker_label'),'MAP_FIELDS missing raw_speaker_label');
@@ -77,11 +78,18 @@ async function run(){
     assert(afterTarget.speaker_code==='OBS_MISMATCH','mismatch row speaker_code should be OBS_MISMATCH');
     assert(String(afterTarget.is_in_character_text)==='0','mismatch row is_in_character_text should be 0');
     assert(/OBS_MISMATCH/.test(String(afterTarget.frontend_validation_warning||'')),'mismatch warning should mention OBS_MISMATCH');
-    stat('v13 selftest 通過。');
+    passed=true;
   }finally{
-    if(ws&&ws.workspace_id)await workspace.clearWorkspace(ws.workspace_id);
-    if(previousWorkspaceId&&workspace.setCurrentWorkspace){workspace.setCurrentWorkspace(previousWorkspaceId);if(inputOps.refresh)await inputOps.refresh({forceSpeakerFilter:true,forceMappings:true,status:false});}
-    else if(inputOps.refreshWorkspaceStatus)await inputOps.refreshWorkspaceStatus();
+    if(previousWorkspaceId&&workspace.setCurrentWorkspace){
+      if(ws&&ws.workspace_id)await workspace.clearWorkspace(ws.workspace_id);
+      workspace.setCurrentWorkspace(previousWorkspaceId);
+      if(inputOps.refresh)await inputOps.refresh({forceSpeakerFilter:true,forceMappings:true,status:false});
+      stat(passed?'v13 selftest 通過，已恢復原工作區。':'v13 selftest 未完成，已恢復原工作區。');
+    }else{
+      if(ws&&workspace.setCurrentWorkspace)workspace.setCurrentWorkspace(ws.workspace_id);
+      if(inputOps.refresh)await inputOps.refresh({forceSpeakerFilter:true,forceMappings:true,status:false});
+      stat(passed?'v13 selftest 通過，已保留 selftest 工作區供檢查。':'v13 selftest 未完成。');
+    }
   }
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>run().catch(e=>stat('v13 selftest 失敗：'+e.message)));else run().catch(e=>stat('v13 selftest 失敗：'+e.message));
