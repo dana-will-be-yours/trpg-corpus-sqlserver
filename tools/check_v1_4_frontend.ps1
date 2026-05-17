@@ -49,16 +49,16 @@ foreach ($relative in $activeHtml) {
     }
 
     $firstScript = $matches[0].Groups[1].Value -replace '\?.*$',''
-    if ($firstScript -ne 'assets/dago-corpus-v13-core.js') {
-        $errors.Add("$relative must load assets/dago-corpus-v13-core.js first; actual first script: $firstScript")
+    if ($firstScript -ne 'assets/dago-corpus-v1-4-core.js') {
+        $errors.Add("$relative must load assets/dago-corpus-v1-4-core.js first; actual first script: $firstScript")
     }
 }
 
 if ($errors.Count -gt 0) {
-    Write-Host 'v13 frontend static path check failed:' -ForegroundColor Red
+    Write-Host 'v1.4 frontend static path check failed:' -ForegroundColor Red
     $errors | ForEach-Object { Write-Host " - $_" -ForegroundColor Red }
     exit 1
 }
 
-Write-Host 'v13 frontend static path check passed.' -ForegroundColor Green
+Write-Host 'v1.4 frontend static path check passed.' -ForegroundColor Green
 exit 0

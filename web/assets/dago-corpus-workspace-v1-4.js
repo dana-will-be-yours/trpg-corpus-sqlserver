@@ -1,8 +1,8 @@
 (()=>{'use strict';
-const VERSION='2026-05-12 json-xlsx-v13-indexeddb-large-workspace';
-const DB_NAME='dagoCorpusWorkspaceDB';
+const VERSION='2026-05-12 json-xlsx-v1-4-indexeddb-large-workspace';
+const DB_NAME='dagoCorpusWorkspaceDB_v14';
 const DB_VERSION=1;
-const SESSION_KEY='dagoCorpusWorkspaceCurrentV13';
+const SESSION_KEY='dagoCorpusWorkspaceCurrentV14';
 let dbPromise=null;
 function now(){return new Date().toISOString()}
 function safeId(s){return String(s||'workspace').replace(/[^A-Za-z0-9_-]+/g,'_').slice(0,80)}
@@ -38,6 +38,6 @@ async function clearAllWorkspaces(){const db=await openWorkspaceDb();const tx=db
 async function iterateRows(workspace_id=getCurrentWorkspaceId(),callback=()=>{}){if(!workspace_id)return;const db=await openWorkspaceDb();const idx=db.transaction('rows','readonly').objectStore('rows').index('workspace_row_order');const reqCur=idx.openCursor(rowRange(workspace_id));let i=0;await new Promise((resolve,reject)=>{reqCur.onerror=()=>reject(reqCur.error);reqCur.onsuccess=async e=>{const c=e.target.result;if(!c){resolve();return}try{await callback(c.value.row_json,i++,c.value)}catch(err){reject(err);return}c.continue()}})}
 async function updateWorkspaceStatusElement(){const el=document.getElementById('workspaceStatus');if(!el)return;try{const workspace_id=getCurrentWorkspaceId();if(!workspace_id){el.textContent='IndexedDB 工作區：尚未建立';return}const ws=await getWorkspace(workspace_id);const count=await getRowCount(workspace_id);el.textContent=`IndexedDB 工作區：${workspace_id}；rows=${count}；版本=${VERSION}`;if(ws&&ws.total_row_count!==count){ws.total_row_count=count;await saveWorkspaceMetadata(ws)}}catch(e){el.textContent='IndexedDB 工作區錯誤：'+e.message}}
 function bindBasicUi(){const btn=document.getElementById('clearIndexedDbWorkspace');if(btn&&!btn.dataset.bound){btn.dataset.bound='1';btn.onclick=async()=>{if(!confirm('確定清除目前本機 IndexedDB 工作區？此動作不會刪除 SQL Server 資料。'))return;try{await clearWorkspace();await updateWorkspaceStatusElement();const s=document.getElementById('status');if(s)s.textContent='已清除目前本機 IndexedDB 工作區。'}catch(e){const s=document.getElementById('status');if(s)s.textContent='清除 IndexedDB 工作區失敗：'+e.message}}}updateWorkspaceStatusElement()}
-window.DagoCorpusWorkspaceV13={VERSION,DB_NAME,SESSION_KEY,openWorkspaceDb,createWorkspace,setCurrentWorkspace,getCurrentWorkspaceId,getWorkspace,saveWorkspaceMetadata,saveRows,saveMaps,getAllMaps,getAllRows,getRowCount,getRowsPage,getSpeakerCounts,updateRow,deleteRow,clearWorkspace,clearAllWorkspaces,iterateRows,withTransaction,cursorRecords,cursorRows,updateRowsByCursor,getRowsChunkByCursor,countRows,updateWorkspaceStatusElement};
+window.DagoCorpusWorkspaceV14={VERSION,DB_NAME,SESSION_KEY,openWorkspaceDb,createWorkspace,setCurrentWorkspace,getCurrentWorkspaceId,getWorkspace,saveWorkspaceMetadata,saveRows,saveMaps,getAllMaps,getAllRows,getRowCount,getRowsPage,getSpeakerCounts,updateRow,deleteRow,clearWorkspace,clearAllWorkspaces,iterateRows,withTransaction,cursorRecords,cursorRows,updateRowsByCursor,getRowsChunkByCursor,countRows,updateWorkspaceStatusElement};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindBasicUi);else bindBasicUi();
 })();

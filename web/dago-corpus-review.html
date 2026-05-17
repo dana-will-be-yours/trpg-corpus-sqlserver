@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>da_go corpus review v13</title>
+<title>trpg corpus review v1.4</title>
 <style>
 body{font-family:Microsoft JhengHei,Noto Sans TC,sans-serif;margin:0;background:#f4f1ea;color:#24211d}main{width:100vw;height:100vh;display:flex;flex-direction:column;padding:10px;box-sizing:border-box}.toolbar{background:#fff;border:1px solid #ccc;padding:8px;margin-bottom:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}.table-wrap{flex:1;overflow:auto;background:#fff;border:1px solid #ccc}table{border-collapse:collapse;width:max-content;min-width:100%;font-size:13px}th,td{border:1px solid #ddd;padding:6px;vertical-align:top}th{position:sticky;top:0;background:#eee;z-index:1}input,textarea,select,button{font:inherit;margin:2px;padding:6px}td textarea{width:520px;min-height:80px}.err{color:#900;white-space:pre-wrap}.warn,.note{color:#850;white-space:pre-wrap}
 </style>
@@ -11,7 +11,7 @@ body{font-family:Microsoft JhengHei,Noto Sans TC,sans-serif;margin:0;background:
 <body>
 <main>
 <div class="toolbar">
-<b>stg.Utterance_Import 審閱工作頁 v13｜版本：2026-05-17 mapping-import-xlsx-v2</b>
+<b>trpg corpus input v1.4｜stg.Utterance_Import 審閱工作頁</b>
 <span id="rowSummary" class="note">目前總列數：0</span>
 <label>顯示發話者<select id="speakerFilter"><option value="__ALL__">all</option></select></label>
 <label>每頁<select id="pageSize"><option value="50">50</option><option value="100" selected>100</option><option value="200">200</option><option value="0">全部</option></select></label>
@@ -21,22 +21,22 @@ body{font-family:Microsoft JhengHei,Noto Sans TC,sans-serif;margin:0;background:
 <label>分批列數<input id="partSize" type="number" value="1000" min="100" step="100"></label>
 <button type="button" id="downloadJsonParts">分批 JSON</button><button type="button" id="downloadXlsxParts">分批 XLSX</button><button type="button" id="downloadTsvParts">分批 TSV</button>
 <input id="mappingImportFile" type="file" accept=".json,.tsv,.txt,.xlsx"><button type="button" id="importMapping">匯入 Speaker Mapping</button><button type="button" id="downloadMappingJson">下載 Mapping JSON</button><button type="button" id="downloadMappingTsv">下載 Mapping UTF-16LE TSV</button><button type="button" id="downloadMappingXlsx">下載 Mapping XLSX</button>
-<span id="status" class="note">v13 審閱頁從 IndexedDB 依 workspace_id 分頁讀取資料。Large Mode 匯出採 cursor chunk。</span>
+<span id="status" class="note">v1.4 審閱頁從 IndexedDB 依 workspace_id 分頁讀取資料。Large Mode 匯出採 cursor chunk。</span>
 </div>
 <div class="table-wrap"><table><thead><tr><th>操作</th><th>row</th><th>speaker_type</th><th>speaker_code</th><th>speaker_label_raw</th><th>function</th><th>start_timecode</th><th>raw text</th><th>clean preview</th><th>scene_code</th><th>frontend_error</th><th>frontend_warning</th></tr></thead><tbody id="rows"></tbody></table></div>
 <table style="display:none"><tbody id="mappingRows"></tbody></table>
 </main>
-<script src="assets/dago-corpus-v13-core.js?v=20260517-mapping-import-xlsx-v2"></script>
-<script src="assets/dago-corpus-workspace-v13.js?v=20260517-mapping-import-xlsx-v2"></script>
-<script src="assets/dago-corpus-workspace-ops-v13.js?v=20260517-mapping-import-xlsx-v2"></script>
-<script src="assets/dago-corpus-review-v13.js?v=20260517-mapping-import-xlsx-v2"></script>
-<script src="assets/dago-corpus-xlsx-core-v13.js?v=20260517-mapping-import-xlsx-v2"></script>
-<script src="assets/dago-corpus-mapping-io-v13.js?v=20260517-mapping-import-xlsx-v2"></script>
-<script src="assets/dago-corpus-export-v13.js?v=20260517-mapping-import-xlsx-v2"></script>
-<script src="assets/dago-corpus-xlsx-parts-v13.js?v=20260517-mapping-import-xlsx-v2"></script>
-<script src="assets/dago-corpus-large-import-v13.js?v=20260517-mapping-import-xlsx-v2"></script>
-<script src="assets/dago-corpus-mapping-validation-v13.js?v=20260517-mapping-import-xlsx-v2"></script>
-<script src="assets/dago-corpus-help-v13.js?v=20260517-mapping-import-xlsx-v2"></script>
-<script src="assets/dago-corpus-v13-selftest.js?v=20260517-mapping-import-xlsx-v2"></script>
+<script src="assets/dago-corpus-v1-4-core.js?v=trpg-corpus-input-v1-4"></script>
+<script src="assets/dago-corpus-workspace-v1-4.js?v=trpg-corpus-input-v1-4"></script>
+<script src="assets/dago-corpus-workspace-ops-v1-4.js?v=trpg-corpus-input-v1-4"></script>
+<script src="assets/dago-corpus-review-v1-4.js?v=trpg-corpus-input-v1-4"></script>
+<script src="assets/dago-corpus-xlsx-core-v1-4.js?v=trpg-corpus-input-v1-4"></script>
+<script src="assets/dago-corpus-mapping-io-v1-4.js?v=trpg-corpus-input-v1-4"></script>
+<script src="assets/dago-corpus-export-v1-4.js?v=trpg-corpus-input-v1-4"></script>
+<script src="assets/dago-corpus-xlsx-parts-v1-4.js?v=trpg-corpus-input-v1-4"></script>
+<script src="assets/dago-corpus-large-import-v1-4.js?v=trpg-corpus-input-v1-4"></script>
+<script src="assets/dago-corpus-mapping-validation-v1-4.js?v=trpg-corpus-input-v1-4"></script>
+<script src="assets/dago-corpus-help-v1-4.js?v=trpg-corpus-input-v1-4"></script>
+<script src="assets/dago-corpus-v1-4-selftest.js?v=trpg-corpus-input-v1-4"></script>
 </body>
 </html>
