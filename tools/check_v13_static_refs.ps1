@@ -3,8 +3,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$ExpectedVersion = '2026-05-17 mapping-io-validation-selftest'
-$ExpectedQuery = '20260517-mapping-io-validation-selftest'
+$ExpectedVersion = 'trpg corpus input v1.4'
+$ExpectedQuery = 'trpg-corpus-input-v1-4'
 $errors = New-Object System.Collections.Generic.List[string]
 
 $corePath = Join-Path $Root 'web/assets/dago-corpus-v13-core.js'
@@ -13,7 +13,7 @@ if (-not (Test-Path $corePath)) {
 } else {
     $core = Get-Content $corePath -Raw -Encoding UTF8
     if ($core -notmatch [regex]::Escape($ExpectedVersion)) {
-        $errors.Add('Core VERSION does not contain expected version string.')
+        $errors.Add('Core VERSION does not contain expected v1.4 version string.')
     }
     foreach ($name in @('UTT_FIELDS','MAP_FIELDS','BATCH_FIELDS','SPEAKER_TYPES','UTTERANCE_FUNCTIONS','targetTableForSpeakerType')) {
         if ($core -notmatch $name) { $errors.Add("Core missing constant/function: $name") }
@@ -33,16 +33,12 @@ foreach ($relative in $activeHtml) {
     }
     $html = Get-Content $path -Raw -Encoding UTF8
     if ($html -notmatch [regex]::Escape($ExpectedVersion)) {
-        $errors.Add("$relative does not contain expected visible version string.")
+        $errors.Add("$relative does not contain expected visible v1.4 version string.")
     }
     $scripts = [regex]::Matches($html, '<script\s+src="([^"]+)"') | ForEach-Object { $_.Groups[1].Value }
     foreach ($src in $scripts) {
         if ($src -notmatch [regex]::Escape($ExpectedQuery)) {
-            $errors.Add("$relative script missing expected query version: $src")
-        }
-        if ($src -match 'v(\d+)') {
-            $ver = [int]$Matches[1]
-            if ($ver -lt 13) { $errors.Add("$relative references legacy version in script: $src") }
+            $errors.Add("$relative script missing expected v1.4 query version: $src")
         }
         if ($src -match 'archive/') {
             $errors.Add("$relative references archive script: $src")
@@ -69,10 +65,8 @@ if (-not (Test-Path $docPath)) {
     $errors.Add('Missing docs/dago_corpus_input_v13_工作手冊.md')
 } else {
     $doc = Get-Content $docPath -Raw -Encoding UTF8
-    if ($doc -match 'web/v13-preview') {
-        $errors.Add('v13 docs still reference non-existent web/v13-preview path.')
-    }
     foreach ($required in @(
+        'trpg corpus input v1.4',
         'web/assets/dago-corpus-v13-core.js',
         'web/assets/dago-corpus-workspace-v13.js',
         'web/assets/dago-corpus-xlsx-core-v13.js',
@@ -82,20 +76,19 @@ if (-not (Test-Path $docPath)) {
         'web/assets/dago-corpus-mapping-validation-v13.js',
         'web/assets/dago-corpus-v13-selftest.js',
         'OBS_MISMATCH',
-        'Speaker_Mapping',
-        '2026-05-17 mapping-io-validation-selftest'
+        'Speaker_Mapping'
     )) {
         if ($doc -notmatch [regex]::Escape($required)) {
-            $errors.Add("v13 docs missing required text: $required")
+            $errors.Add("v1.4 docs missing required text: $required")
         }
     }
 }
 
 if ($errors.Count -gt 0) {
-    Write-Host 'v13 static reference check failed:' -ForegroundColor Red
+    Write-Host 'trpg corpus input v1.4 static reference check failed:' -ForegroundColor Red
     $errors | ForEach-Object { Write-Host " - $_" -ForegroundColor Red }
     exit 1
 }
 
-Write-Host 'v13 static reference check passed.' -ForegroundColor Green
+Write-Host 'trpg corpus input v1.4 static reference check passed.' -ForegroundColor Green
 exit 0
