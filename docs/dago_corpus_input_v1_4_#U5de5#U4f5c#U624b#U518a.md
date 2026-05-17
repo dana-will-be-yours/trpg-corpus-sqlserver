@@ -6,7 +6,7 @@
 trpg corpus input v1.4
 ```
 
-本手冊是 `v1.4` 分支的工作基準。`v1.4` 由 v13 總驗收版複製建立，核心目標是保留 v13 已完成的語料整理、Speaker Mapping、IndexedDB 工作區、前端驗證、JSON / UTF-16LE TSV / XLSX 匯入匯出與分批匯出能力，作為下一步論文銜接計畫的穩定基準。
+本手冊是 `v1.4` 分支的工作基準。`v1.4` 由 v1.4 總驗收版複製建立，核心目標是保留 v1.4 已完成的語料整理、Speaker Mapping、IndexedDB 工作區、前端驗證、JSON / UTF-16LE TSV / XLSX 匯入匯出與分批匯出能力，作為下一步論文銜接計畫的穩定基準。
 
 ## 一、建立來源
 
@@ -20,28 +20,28 @@ script query：trpg-corpus-input-v1-4
 
 ## 二、v1.4 active files
 
-v1.4 沿用 v13 檔名與命名空間，避免大規模改名造成 JS 相依性中斷。正式版本名稱以頁面標題、core VERSION、文件與靜態檢查腳本為準。
+v1.4 沿用 v1.4 檔名與命名空間，避免大規模改名造成 JS 相依性中斷。正式版本名稱以頁面標題、core VERSION、文件與靜態檢查腳本為準。
 
 ```text
 web/dago-corpus-input.html
 web/dago-corpus-review.html
-web/assets/dago-corpus-v13-core.js
-web/assets/dago-corpus-workspace-v13.js
-web/assets/dago-corpus-workspace-ops-v13.js
-web/assets/dago-corpus-parser-v13.js
-web/assets/dago-corpus-docx-v13.js
-web/assets/dago-corpus-open-review-v13.js
-web/assets/dago-corpus-input-ops-v13.js
-web/assets/dago-corpus-review-v13.js
-web/assets/dago-corpus-xlsx-core-v13.js
-web/assets/dago-corpus-mapping-io-v13.js
-web/assets/dago-corpus-export-v13.js
-web/assets/dago-corpus-xlsx-parts-v13.js
-web/assets/dago-corpus-large-import-v13.js
-web/assets/dago-corpus-stress-test-v13.js
-web/assets/dago-corpus-mapping-validation-v13.js
-web/assets/dago-corpus-help-v13.js
-web/assets/dago-corpus-v13-selftest.js
+web/assets/dago-corpus-v1-4-core.js
+web/assets/dago-corpus-workspace-v1-4.js
+web/assets/dago-corpus-workspace-ops-v1-4.js
+web/assets/dago-corpus-parser-v1-4.js
+web/assets/dago-corpus-docx-v1-4.js
+web/assets/dago-corpus-open-review-v1-4.js
+web/assets/dago-corpus-input-ops-v1-4.js
+web/assets/dago-corpus-review-v1-4.js
+web/assets/dago-corpus-xlsx-core-v1-4.js
+web/assets/dago-corpus-mapping-io-v1-4.js
+web/assets/dago-corpus-export-v1-4.js
+web/assets/dago-corpus-xlsx-parts-v1-4.js
+web/assets/dago-corpus-large-import-v1-4.js
+web/assets/dago-corpus-stress-test-v1-4.js
+web/assets/dago-corpus-mapping-validation-v1-4.js
+web/assets/dago-corpus-help-v1-4.js
+web/assets/dago-corpus-v1-4-selftest.js
 ```
 
 ## 三、版本號檢查規則
@@ -52,9 +52,9 @@ web/assets/dago-corpus-v13-selftest.js
 1. web/dago-corpus-input.html 大標題：trpg corpus input v1.4
 2. web/dago-corpus-review.html 大標題：trpg corpus input v1.4
 3. active script query：trpg-corpus-input-v1-4
-4. web/assets/dago-corpus-v13-core.js 的 VERSION：trpg corpus input v1.4
+4. web/assets/dago-corpus-v1-4-core.js 的 VERSION：trpg corpus input v1.4
 5. 本手冊版本名稱
-6. tools/check_v13_static_refs.ps1 的 ExpectedVersion / ExpectedQuery
+6. tools/check_v1_4_static_refs.ps1 的 ExpectedVersion / ExpectedQuery
 ```
 
 ## 四、保留功能
@@ -108,7 +108,7 @@ D. 找到 mapping，row.speaker_code 與 mapping.speaker_code 不一致：
 
 ## 六、論文銜接定位
 
-v1.4 是論文工具鏈的穩定前端基準，對應博士論文第 4 章先導研究與第 5 章資料庫與語料治理。下一步應依 `trpg_corpus_v13_next_github_plan_and_thesis_alignment.md` 推進實驗資料治理層。
+v1.4 是論文工具鏈的穩定前端基準，對應博士論文第 4 章先導研究與第 5 章資料庫與語料治理。下一步應依 `trpg_corpus_v1_4_next_github_plan_and_thesis_alignment.md` 推進實驗資料治理層。
 
 下一階段不應優先擴充遊戲性。優先任務是建立正式實驗所需資料表與匯入流程：
 
@@ -139,4 +139,4 @@ Main analysis views
 
 ## 八、結論
 
-`trpg corpus input v1.4` 是 v13 的正式穩定化分支。它保留目前已驗收的前端語料處理能力，並為下一步論文銜接計畫提供固定基準。下一個開發分支應在 v1.4 之上建立實驗資料治理層，而非修改已穩定的逐字稿與 Speaker Mapping 工作流。
+`trpg corpus input v1.4` 是 v1.4 的正式穩定化分支。它保留目前已驗收的前端語料處理能力，並為下一步論文銜接計畫提供固定基準。下一個開發分支應在 v1.4 之上建立實驗資料治理層，而非修改已穩定的逐字稿與 Speaker Mapping 工作流。

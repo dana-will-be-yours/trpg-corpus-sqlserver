@@ -2,26 +2,26 @@
 const enabled=new URLSearchParams(location.search).get('selftest')==='1';
 if(!enabled)return;
 function $(id){return document.getElementById(id)}
-function stat(msg){const s=$('status');if(s)s.textContent=msg;console.log('[v13 selftest]',msg)}
-window.addEventListener('error',e=>stat('v13 script error：'+(e.error&&e.error.message?e.error.message:e.message)));
-window.addEventListener('unhandledrejection',e=>stat('v13 promise error：'+(e.reason&&e.reason.message?e.reason.message:e.reason)));
+function stat(msg){const s=$('status');if(s)s.textContent=msg;console.log('[v1.4 selftest]',msg)}
+window.addEventListener('error',e=>stat('v1.4 script error：'+(e.error&&e.error.message?e.error.message:e.message)));
+window.addEventListener('unhandledrejection',e=>stat('v1.4 promise error：'+(e.reason&&e.reason.message?e.reason.message:e.reason)));
 function assert(cond,msg){if(!cond)throw new Error(msg)}
 async function run(){
-  stat('v13 selftest 啟動。');
-  const core=window.DagoCorpusV13Core;
-  const workspace=window.DagoCorpusWorkspaceV13;
-  const parser=window.DagoCorpusParserV13;
-  const inputOps=window.DagoCorpusInputOpsV13;
-  const exportApi=window.DagoCorpusExportV13;
-  const mappingIo=window.DagoCorpusMappingIoV13;
-  const mappingValidation=window.DagoCorpusMappingValidationV13;
-  assert(core,'DagoCorpusV13Core missing');
-  assert(workspace,'DagoCorpusWorkspaceV13 missing');
-  assert(parser,'DagoCorpusParserV13 missing');
-  assert(inputOps,'DagoCorpusInputOpsV13 missing');
-  assert(exportApi,'DagoCorpusExportV13 missing');
-  assert(mappingIo,'DagoCorpusMappingIoV13 missing');
-  assert(mappingValidation,'DagoCorpusMappingValidationV13 missing');
+  stat('v1.4 selftest 啟動。');
+  const core=window.DagoCorpusV14Core;
+  const workspace=window.DagoCorpusWorkspaceV14;
+  const parser=window.DagoCorpusParserV14;
+  const inputOps=window.DagoCorpusInputOpsV14;
+  const exportApi=window.DagoCorpusExportV14;
+  const mappingIo=window.DagoCorpusMappingIoV14;
+  const mappingValidation=window.DagoCorpusMappingValidationV14;
+  assert(core,'DagoCorpusV14Core missing');
+  assert(workspace,'DagoCorpusWorkspaceV14 missing');
+  assert(parser,'DagoCorpusParserV14 missing');
+  assert(inputOps,'DagoCorpusInputOpsV14 missing');
+  assert(exportApi,'DagoCorpusExportV14 missing');
+  assert(mappingIo,'DagoCorpusMappingIoV14 missing');
+  assert(mappingValidation,'DagoCorpusMappingValidationV14 missing');
   const previousWorkspaceId=workspace.getCurrentWorkspaceId?workspace.getCurrentWorkspaceId():null;
   let ws=null;
   let passed=false;
@@ -84,13 +84,13 @@ async function run(){
       if(ws&&ws.workspace_id)await workspace.clearWorkspace(ws.workspace_id);
       workspace.setCurrentWorkspace(previousWorkspaceId);
       if(inputOps.refresh)await inputOps.refresh({forceSpeakerFilter:true,forceMappings:true,status:false});
-      stat(passed?'v13 selftest 通過，已恢復原工作區。':'v13 selftest 未完成，已恢復原工作區。');
+      stat(passed?'v1.4 selftest 通過，已恢復原工作區。':'v1.4 selftest 未完成，已恢復原工作區。');
     }else{
       if(ws&&workspace.setCurrentWorkspace)workspace.setCurrentWorkspace(ws.workspace_id);
       if(inputOps.refresh)await inputOps.refresh({forceSpeakerFilter:true,forceMappings:true,status:false});
-      stat(passed?'v13 selftest 通過，已保留 selftest 工作區供檢查。':'v13 selftest 未完成。');
+      stat(passed?'v1.4 selftest 通過，已保留 selftest 工作區供檢查。':'v1.4 selftest 未完成。');
     }
   }
 }
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>run().catch(e=>stat('v13 selftest 失敗：'+e.message)));else run().catch(e=>stat('v13 selftest 失敗：'+e.message));
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>run().catch(e=>stat('v1.4 selftest 失敗：'+e.message)));else run().catch(e=>stat('v1.4 selftest 失敗：'+e.message));
 })();
