@@ -3,8 +3,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$ExpectedVersion = '2026-05-12 json-xlsx-v13-indexeddb-large-workspace'
-$ExpectedQuery = '20260512-v13-indexeddb-large-workspace'
+$ExpectedVersion = '2026-05-17 mapping-io-validation-selftest'
+$ExpectedQuery = '20260517-mapping-io-validation-selftest'
 $errors = New-Object System.Collections.Generic.List[string]
 
 $corePath = Join-Path $Root 'web/assets/dago-corpus-v13-core.js'
@@ -15,8 +15,8 @@ if (-not (Test-Path $corePath)) {
     if ($core -notmatch [regex]::Escape($ExpectedVersion)) {
         $errors.Add('Core VERSION does not contain expected version string.')
     }
-    foreach ($name in @('UTT_FIELDS','MAP_FIELDS','BATCH_FIELDS','SPEAKER_TYPES','UTTERANCE_FUNCTIONS')) {
-        if ($core -notmatch $name) { $errors.Add("Core missing constant: $name") }
+    foreach ($name in @('UTT_FIELDS','MAP_FIELDS','BATCH_FIELDS','SPEAKER_TYPES','UTTERANCE_FUNCTIONS','targetTableForSpeakerType')) {
+        if ($core -notmatch $name) { $errors.Add("Core missing constant/function: $name") }
     }
 }
 
@@ -44,6 +44,23 @@ foreach ($relative in $activeHtml) {
             $ver = [int]$Matches[1]
             if ($ver -lt 13) { $errors.Add("$relative references legacy version in script: $src") }
         }
+        if ($src -match 'archive/') {
+            $errors.Add("$relative references archive script: $src")
+        }
+    }
+    foreach ($requiredScript in @(
+        'assets/dago-corpus-v13-core.js',
+        'assets/dago-corpus-workspace-v13.js',
+        'assets/dago-corpus-workspace-ops-v13.js',
+        'assets/dago-corpus-xlsx-core-v13.js',
+        'assets/dago-corpus-mapping-io-v13.js',
+        'assets/dago-corpus-export-v13.js',
+        'assets/dago-corpus-mapping-validation-v13.js',
+        'assets/dago-corpus-v13-selftest.js'
+    )) {
+        if ($html -notmatch [regex]::Escape($requiredScript)) {
+            $errors.Add("$relative missing required script: $requiredScript")
+        }
     }
 }
 
@@ -58,12 +75,18 @@ if (-not (Test-Path $docPath)) {
     foreach ($required in @(
         'web/assets/dago-corpus-v13-core.js',
         'web/assets/dago-corpus-workspace-v13.js',
+        'web/assets/dago-corpus-xlsx-core-v13.js',
+        'web/assets/dago-corpus-mapping-io-v13.js',
         'web/assets/dago-corpus-export-v13.js',
         'web/assets/dago-corpus-large-import-v13.js',
-        'web/assets/dago-corpus-mapping-validation-v13.js'
+        'web/assets/dago-corpus-mapping-validation-v13.js',
+        'web/assets/dago-corpus-v13-selftest.js',
+        'OBS_MISMATCH',
+        'Speaker_Mapping',
+        '2026-05-17 mapping-io-validation-selftest'
     )) {
         if ($doc -notmatch [regex]::Escape($required)) {
-            $errors.Add("v13 docs missing active file: $required")
+            $errors.Add("v13 docs missing required text: $required")
         }
     }
 }
