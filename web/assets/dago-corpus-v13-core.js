@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const VERSION='2026-05-12 json-xlsx-v13-indexeddb-large-workspace';
+const VERSION='2026-05-17 mapping-io-validation-selftest';
 const SPEAKER_TYPES=Object.freeze(['GM','PL','PC','NPC','Observer','Researcher']);
 const UTTERANCE_FUNCTIONS=Object.freeze(['narration','dialogue','action','rule_check','decision','negotiation','question','clarification','conflict','summary']);
 const UTT_FIELDS=Object.freeze(['import_batch_code','import_batch_id','source_row_no','project_code','team_code','session_code','scene_code','turn_no_text','sub_turn_no_text','utterance_code','speaker_type','speaker_code','speaker_label_raw','utterance_function','is_in_character_text','is_gm_narration_text','is_rule_related_text','is_decision_related_text','is_knowledge_related_text','start_timecode','end_timecode','duration_sec_text','utterance_text_raw','utterance_text_clean','utterance_text_verified','language_code','emotion_label','interaction_target_type','interaction_target_code','related_rule_code','related_world_setting_code','related_item_code','ai_summary','ai_annotation_json','human_annotation_note','transcription_confidence_text','review_status','include_in_analysis_text','exclusion_reason','import_status','frontend_validation_error','frontend_validation_warning']);
