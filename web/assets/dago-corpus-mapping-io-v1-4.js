@@ -58,9 +58,81 @@ return entries.has('xl/worksheets/sheet1.xml')?'xl/worksheets/sheet1.xml':Array.
 function cellValue(cAttrs,inner,shared){if(cAttrs.t==='inlineStr'){let s='';for(const m of inner.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g))s+=unxml(m[1]);return s}const vm=inner.match(/<v[^>]*>([\s\S]*?)<\/v>/);if(!vm)return'';const v=unxml(vm[1]);return cAttrs.t==='s'?(shared[Number(v)]||''):v}
 function worksheetRows(xml,shared){const rows=[];for(const rm of xml.matchAll(/<row\b[^>]*>([\s\S]*?)<\/row>/g)){const cells=[];let seq=0;for(const cm of rm[1].matchAll(/<c\b([^>]*)>([\s\S]*?)<\/c>/g)){const a=attrs(cm[1]);const idx=colIndex(a.r);const pos=idx==null?seq:idx;cells[pos]=cellValue(a,cm[2],shared);seq=pos+1}if(cells.some(v=>String(v||'').trim()!==''))rows.push(cells)}return rows}
 async function parseMappingXlsx(file){if(!file)throw new Error('尚未選擇 Mapping XLSX 檔案。');const entries=await readZipEntries(file);const sp=sheetPath(entries);if(!sp||!entries.has(sp))throw new Error('XLSX 中找不到 Speaker_Mapping 工作表。');const rows=worksheetRows(xmlText(entries.get(sp)),sharedStrings(entries));if(rows.length<2)throw new Error('XLSX Speaker_Mapping 至少需要表頭與一筆資料。');const headers=rows[0].map(h=>String(h||'').trim());const missing=['raw_speaker_label','speaker_type','speaker_code'].filter(f=>!headers.includes(f));if(missing.length)throw new Error('XLSX 缺少必要欄位：'+missing.join(', '));const objects=rows.slice(1).map(cells=>{const r={};headers.forEach((h,i)=>r[h]=cells[i]??'');return r});const parsed=normalizeImportRows(objects);if(!parsed.length)throw new Error('XLSX 中沒有可匯入的 Speaker Mapping 資料列。');return parsed}
+const OBS_MISMATCH_CODE='OBS_MISMATCH';
+function inCharacterForType(type){return(type==='PC'||type==='NPC')?'1':'0'}
+function appendImportWarning(old,msg){
+    const a=String(old||'').split(/\n+/).filter(Boolean);
+    if(msg&&!a.includes(msg))a.push(msg);
+    return a.join('\n')||null
+}
+async function applyImportedMapsToRows(workspace_id,maps=[]){
+    const byRaw=new Map();
+    normalizeImportRows(maps).forEach(m=>{
+        const raw=String(m.raw_speaker_label||'').trim();
+        if(raw)byRaw.set(raw,m);
+    });
+
+    let scanned=0;
+    let updated=0;
+    let mismatchObserverCount=0;
+    let filledFromMappingCount=0;
+    let typeFixedFromMappingCount=0;
+
+    await api().updateRowsByCursor(workspace_id,(row)=>{
+        scanned++;
+        const raw=String(row.speaker_label_raw||'').trim();
+        const m=byRaw.get(raw);
+        if(!m)return null;
+
+        const next={...row};
+        let changed=false;
+
+        const currentCode=String(next.speaker_code||'').trim();
+        const mappingCode=String(m.speaker_code||'').trim();
+        const mappingType=String(m.speaker_type||'').trim();
+
+        if(mappingCode&&currentCode&&currentCode!==mappingCode){
+            next.speaker_type='Observer';
+            next.speaker_code=OBS_MISMATCH_CODE;
+            next.is_in_character_text='0';
+            next.frontend_validation_warning=appendImportWarning(
+                next.frontend_validation_warning,
+                `Speaker Mapping 驗證：row ${next.source_row_no||next.turn_no_text||'?'} speaker_code 應為 ${mappingCode}，目前為 ${currentCode}；偵測發話人未知，待確認；已以 Observer / ${OBS_MISMATCH_CODE} 處理。`
+            );
+            changed=true;
+            mismatchObserverCount++;
+        }else{
+            if(mappingCode&&currentCode!==mappingCode){
+                next.speaker_code=mappingCode;
+                changed=true;
+                filledFromMappingCount++;
+            }
+            if(mappingType&&next.speaker_type!==mappingType){
+                next.speaker_type=mappingType;
+                next.is_in_character_text=inCharacterForType(mappingType);
+                changed=true;
+                typeFixedFromMappingCount++;
+            }
+        }
+
+        if(changed){
+            updated++;
+            return next;
+        }
+        return null;
+    });
+
+    return{
+        scanned,
+        updated,
+        observer_mismatch_count:mismatchObserverCount,
+        filled_from_mapping_count:filledFromMappingCount,
+        type_fixed_from_mapping_count:typeFixedFromMappingCount
+    }
+}
 async function replaceWorkspaceMaps(rows){const id=await ensureWorkspaceForImport();const normalized=normalizeImportRows(rows);const summary=validateMappingRows(normalized);if(summary.error_count>0)throw new Error('Speaker Mapping 匯入失敗：\n'+summary.errors.join('\n'));await ops().replaceMaps(id,normalized);if(window.DagoCorpusInputOpsV14&&window.DagoCorpusInputOpsV14.refresh)await window.DagoCorpusInputOpsV14.refresh({forceMappings:true,forceSpeakerFilter:true});else if(window.DagoCorpusInputOpsV14&&window.DagoCorpusInputOpsV14.refreshMappings)await window.DagoCorpusInputOpsV14.refreshMappings(true);if(api().updateWorkspaceStatusElement)await api().updateWorkspaceStatusElement();stat(`Speaker Mapping 匯入完成：${normalized.length} 筆；warnings=${summary.warning_count}。請按「前端驗證」。`);return{rows:normalized,summary}}
 async function importMappingFile(file){if(!file){const input=$('mappingImportFile');file=input&&input.files&&input.files[0];}if(!file)throw new Error('尚未選擇 Mapping 檔案。');const name=String(file.name||'').toLowerCase();if(name.endsWith('.xlsx'))return replaceWorkspaceMaps(await parseMappingXlsx(file));const text=await readTextFile(file);if(name.endsWith('.json'))return replaceWorkspaceMaps(parseMappingJson(text));if(name.endsWith('.tsv')||name.endsWith('.txt')||name.endsWith('.csv'))return replaceWorkspaceMaps(parseMappingTsv(text));throw new Error('不支援的 Mapping 檔案格式，請使用 .json、.xlsx、.tsv、.txt 或 .csv。')}
 function bind(){const importBtn=$('importMapping');if(importBtn&&!importBtn.dataset.boundMappingIo){importBtn.dataset.boundMappingIo='1';importBtn.onclick=()=>importMappingFile().catch(e=>stat('Speaker Mapping 匯入失敗：'+e.message))}const json=$('downloadMappingJson');if(json&&!json.dataset.boundMappingIo){json.dataset.boundMappingIo='1';json.onclick=()=>downloadMappingJson().catch(e=>stat('Speaker Mapping JSON 匯出失敗：'+e.message))}const tsv=$('downloadMappingTsv');if(tsv&&!tsv.dataset.boundMappingIo){tsv.dataset.boundMappingIo='1';tsv.onclick=()=>downloadMappingTsv().catch(e=>stat('Speaker Mapping TSV 匯出失敗：'+e.message))}const xlsx=$('downloadMappingXlsx');if(xlsx&&!xlsx.dataset.boundMappingIo){xlsx.dataset.boundMappingIo='1';xlsx.onclick=()=>downloadMappingXlsx().catch(e=>stat('Speaker Mapping XLSX 匯出失敗：'+e.message))}}
-window.DagoCorpusMappingIoV14={VERSION,MAP_FIELDS,normalizeMappingRows,normalizeImportRows,validateMappingRows,downloadMappingJson,downloadMappingTsv,downloadMappingXlsx,serializeMappingJson,parseMappingJson,checkMappingJsonRoundTrip,serializeMappingTsv,parseMappingTsv,checkMappingTsvRoundTrip,buildMappingXlsxBlob,templateRows,exportRows,parseMappingXlsx,replaceWorkspaceMaps,importMappingFile};
+window.DagoCorpusMappingIoV14={VERSION,MAP_FIELDS,normalizeMappingRows,normalizeImportRows,validateMappingRows,downloadMappingJson,downloadMappingTsv,downloadMappingXlsx,serializeMappingJson,parseMappingJson,checkMappingJsonRoundTrip,serializeMappingTsv,parseMappingTsv,checkMappingTsvRoundTrip,buildMappingXlsxBlob,templateRows,exportRows,parseMappingXlsx,replaceWorkspaceMaps,applyImportedMapsToRows,importMappingFile};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
 })();

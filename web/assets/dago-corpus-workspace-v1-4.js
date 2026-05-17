@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const VERSION='2026-05-12 json-xlsx-v1-4-indexeddb-large-workspace';
 const DB_NAME='dagoCorpusWorkspaceDB_v14';
-const DB_VERSION=1;
+const DB_VERSION=2;
 const SESSION_KEY='dagoCorpusWorkspaceCurrentV14';
 let dbPromise=null;
 function now(){return new Date().toISOString()}
@@ -9,14 +9,67 @@ function safeId(s){return String(s||'workspace').replace(/[^A-Za-z0-9_-]+/g,'_')
 function makeWorkspaceId(meta={}){const base=safeId(meta.batch_code||meta.session_code||'DAGO_WORKSPACE');const stamp=new Date().toISOString().replace(/[-:.TZ]/g,'').slice(0,14);const rand=Math.random().toString(36).slice(2,8);return `${base}_${stamp}_${rand}`}
 function req(request){return new Promise((resolve,reject)=>{request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error('IndexedDB request failed'))})}
 function txDone(tx){return new Promise((resolve,reject)=>{tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||new Error('IndexedDB transaction failed'));tx.onabort=()=>reject(tx.error||new Error('IndexedDB transaction aborted'))})}
-function openWorkspaceDb(){if(dbPromise)return dbPromise;dbPromise=new Promise((resolve,reject)=>{if(!('indexedDB' in window)){reject(new Error('此瀏覽器不支援 IndexedDB。'));return}const open=indexedDB.open(DB_NAME,DB_VERSION);open.onupgradeneeded=()=>{const db=open.result;if(!db.objectStoreNames.contains('workspaces'))db.createObjectStore('workspaces',{keyPath:'workspace_id'});if(!db.objectStoreNames.contains('rows')){const rows=db.createObjectStore('rows',{keyPath:'id'});rows.createIndex('workspace_id','workspace_id',{unique:false});rows.createIndex('workspace_source_row',['workspace_id','source_row_no'],{unique:false});rows.createIndex('workspace_speaker',['workspace_id','speaker_code'],{unique:false});rows.createIndex('workspace_row_order',['workspace_id','row_order'],{unique:false})}if(!db.objectStoreNames.contains('maps')){const maps=db.createObjectStore('maps',{keyPath:'id'});maps.createIndex('workspace_id','workspace_id',{unique:false});maps.createIndex('workspace_raw_speaker',['workspace_id','raw_speaker_label'],{unique:false})}};open.onsuccess=()=>resolve(open.result);open.onerror=()=>reject(open.error||new Error('IndexedDB open failed'))});return dbPromise}
+function openWorkspaceDb(){if(dbPromise)return dbPromise;dbPromise=new Promise((resolve,reject)=>{if(!('indexedDB' in window)){reject(new Error('此瀏覽器不支援 IndexedDB。'));return}const open=indexedDB.open(DB_NAME,DB_VERSION);open.onupgradeneeded=()=>{
+    const db=open.result;
+    let rows=null;
+    let maps=null;
+
+    if(!db.objectStoreNames.contains('workspaces')){
+        db.createObjectStore('workspaces',{keyPath:'workspace_id'});
+    }
+
+    if(!db.objectStoreNames.contains('rows')){
+        rows=db.createObjectStore('rows',{keyPath:'id'});
+    }else{
+        rows=open.transaction.objectStore('rows');
+    }
+
+    if(!rows.indexNames.contains('workspace_id')){
+        rows.createIndex('workspace_id','workspace_id',{unique:false});
+    }
+    if(!rows.indexNames.contains('workspace_source_row')){
+        rows.createIndex('workspace_source_row',['workspace_id','source_row_no'],{unique:false});
+    }
+    if(!rows.indexNames.contains('workspace_speaker')){
+        rows.createIndex('workspace_speaker',['workspace_id','speaker_code'],{unique:false});
+    }
+    if(!rows.indexNames.contains('workspace_row_order')){
+        rows.createIndex('workspace_row_order',['workspace_id','row_order'],{unique:false});
+    }
+    if(!rows.indexNames.contains('workspace_speaker_order')){
+        rows.createIndex('workspace_speaker_order',['workspace_id','speaker_code','row_order'],{unique:false});
+    }
+
+    if(!db.objectStoreNames.contains('maps')){
+        maps=db.createObjectStore('maps',{keyPath:'id'});
+    }else{
+        maps=open.transaction.objectStore('maps');
+    }
+
+    if(!maps.indexNames.contains('workspace_id')){
+        maps.createIndex('workspace_id','workspace_id',{unique:false});
+    }
+    if(!maps.indexNames.contains('workspace_raw_speaker')){
+        maps.createIndex('workspace_raw_speaker',['workspace_id','raw_speaker_label'],{unique:false});
+    }
+};
+open.onsuccess=()=>resolve(open.result);open.onerror=()=>reject(open.error||new Error('IndexedDB open failed'))});return dbPromise}
 function setCurrentWorkspace(workspace_id){sessionStorage.setItem(SESSION_KEY,JSON.stringify({workspace_id,version:VERSION,updated_at:now()}));return workspace_id}
 function getCurrentWorkspaceId(){try{return JSON.parse(sessionStorage.getItem(SESSION_KEY)||'{}').workspace_id||null}catch(e){return null}}
 function rowRange(workspace_id){return IDBKeyRange.bound([workspace_id,Number.NEGATIVE_INFINITY],[workspace_id,Number.POSITIVE_INFINITY])}
 function speakerRange(workspace_id,speaker){return IDBKeyRange.only([workspace_id,speaker])}
+function speakerOrderRange(workspace_id,speaker){return IDBKeyRange.bound([workspace_id,speaker,Number.NEGATIVE_INFINITY],[workspace_id,speaker,Number.POSITIVE_INFINITY])}
 async function withTransaction(storeNames,mode='readonly',callback=()=>{}){const db=await openWorkspaceDb();const names=Array.isArray(storeNames)?storeNames:[storeNames];const tx=db.transaction(names,mode);const stores=Object.fromEntries(names.map(name=>[name,tx.objectStore(name)]));let result;try{result=callback(stores,tx)}catch(e){try{tx.abort()}catch(ignore){}throw e}await txDone(tx);return result}
 async function cursorRecords(storeName,indexName,range,options={},callback=()=>{}){const db=await openWorkspaceDb();const tx=db.transaction(storeName,'readonly');const source=indexName?tx.objectStore(storeName).index(indexName):tx.objectStore(storeName);const direction=options.direction||'next';const limit=Number(options.limit||0);const offset=Number(options.offset||0);const out=[];const reqCur=source.openCursor(range,direction);let skipped=false,seen=0;await new Promise((resolve,reject)=>{reqCur.onerror=()=>reject(reqCur.error);reqCur.onsuccess=e=>{const c=e.target.result;if(!c||limit&&out.length>=limit){resolve();return}if(!skipped&&offset>0){skipped=true;c.advance(offset);return}const value=c.value;const mapped=callback(value,seen++,c);if(mapped!==undefined)out.push(mapped);c.continue()}});return out}
-async function cursorRows(workspace_id=getCurrentWorkspaceId(),options={},callback){if(!workspace_id)return[];const speaker=options.speakerFilter||options.speaker_code||'__ALL__';const limit=Number(options.limit||0);const offset=Number(options.offset||0);if(speaker&&speaker!=='__ALL__'){const rows=await cursorRecords('rows','workspace_speaker',speakerRange(workspace_id,speaker),{limit:0,offset:0},(rec)=>rec);const sorted=rows.sort((a,b)=>(a.row_order-b.row_order)||(a.source_row_no-b.source_row_no));const sliced=limit?sorted.slice(offset,offset+limit):sorted.slice(offset);return sliced.map((rec,i)=>callback?callback(rec.row_json,i,rec):rec.row_json)}return await cursorRecords('rows','workspace_row_order',rowRange(workspace_id),{limit,offset},(rec,i)=>callback?callback(rec.row_json,i,rec):rec.row_json)}
+async function cursorRows(workspace_id=getCurrentWorkspaceId(),options={},callback){if(!workspace_id)return[];const speaker=options.speakerFilter||options.speaker_code||'__ALL__';const limit=Number(options.limit||0);const offset=Number(options.offset||0);if(speaker&&speaker!=='__ALL__'){
+    return await cursorRecords(
+        'rows',
+        'workspace_speaker_order',
+        speakerOrderRange(workspace_id,speaker),
+        {limit,offset},
+        (rec,i)=>callback?callback(rec.row_json,i,rec):rec.row_json
+    )
+}return await cursorRecords('rows','workspace_row_order',rowRange(workspace_id),{limit,offset},(rec,i)=>callback?callback(rec.row_json,i,rec):rec.row_json)}
 async function updateRowsByCursor(workspace_id=getCurrentWorkspaceId(),updater=()=>null){if(!workspace_id)return 0;const db=await openWorkspaceDb();const tx=db.transaction('rows','readwrite');const idx=tx.objectStore('rows').index('workspace_row_order');const reqCur=idx.openCursor(rowRange(workspace_id));let count=0;await new Promise((resolve,reject)=>{reqCur.onerror=()=>reject(reqCur.error);reqCur.onsuccess=e=>{const c=e.target.result;if(!c){resolve();return}try{const rec=c.value;const nextRow=updater(rec.row_json,count,rec);if(nextRow){const source=Number(nextRow.source_row_no||rec.source_row_no);const updated={...rec,source_row_no:source,row_order:Number(nextRow.row_order||rec.row_order||source),speaker_code:nextRow.speaker_code||'',speaker_type:nextRow.speaker_type||'',turn_no_text:String(nextRow.turn_no_text||source),row_json:{...nextRow,source_row_no:source,row_order:Number(nextRow.row_order||rec.row_order||source),turn_no_text:String(nextRow.turn_no_text||source)},updated_at:now()};c.update(updated)}count++;c.continue()}catch(err){reject(err)}}});await txDone(tx);return count}
 async function getRowsChunkByCursor(workspace_id=getCurrentWorkspaceId(),startIndex=0,limit=1000,speakerFilter='__ALL__'){return await cursorRows(workspace_id,{offset:Number(startIndex)||0,limit:Number(limit)||1000,speakerFilter})}
 async function countRows(workspace_id=getCurrentWorkspaceId(),speakerFilter='__ALL__'){return await getRowCount(workspace_id,speakerFilter)}
