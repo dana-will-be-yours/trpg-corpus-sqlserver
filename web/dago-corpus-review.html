@@ -21,23 +21,25 @@ body{font-family:Microsoft JhengHei,Noto Sans TC,sans-serif;margin:0;background:
 <label>分批列數<input id="partSize" type="number" value="1000" min="100" step="100"></label>
 <button type="button" id="downloadJsonParts">分批 JSON</button><button type="button" id="downloadXlsxParts">分批 XLSX</button><button type="button" id="downloadTsvParts">分批 TSV</button>
 <input id="mappingImportFile" type="file" accept=".json,.tsv,.txt,.xlsx"><button type="button" id="importMapping">匯入 Speaker Mapping</button><button type="button" id="downloadMappingJson">下載 Mapping JSON</button><button type="button" id="downloadMappingTsv">下載 Mapping UTF-16LE TSV</button><button type="button" id="downloadMappingXlsx">下載 Mapping XLSX</button>
-<span id="status" class="note">v1.4 審閱頁從 IndexedDB 依 workspace_id 分頁讀取資料。Large Mode 匯出採 cursor chunk。</span>
+<span id="status" class="note">v1.4 審閱頁從 IndexedDB 依 workspace_id 分頁讀取資料。Large Mode 匯出採 cursor chunk；TURBO_CHUNK 工作區由 rowops v3 adapter 接管。</span>
 </div>
 <div class="table-wrap"><table><thead><tr><th>操作</th><th>row</th><th>speaker_type</th><th>speaker_code</th><th>speaker_label_raw</th><th>function</th><th>start_timecode</th><th>raw text</th><th>clean preview</th><th>scene_code</th><th>frontend_error</th><th>frontend_warning</th></tr></thead><tbody id="rows"></tbody></table></div>
 <table style="display:none"><tbody id="mappingRows"></tbody></table>
 </main>
-<script src="assets/dago-corpus-v1-4-core.js?v=20260517-row50k-mapping-authority-v2"></script>
-<script src="assets/dago-corpus-workspace-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
-<script src="assets/dago-corpus-workspace-ops-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
-<script src="assets/dago-corpus-review-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
-<script src="assets/dago-corpus-xlsx-core-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
-<script src="assets/dago-corpus-mapping-io-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
-<script src="assets/dago-corpus-export-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
-<script src="assets/dago-corpus-xlsx-parts-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
-<script src="assets/dago-corpus-large-import-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
-<script src="assets/dago-corpus-mapping-validation-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
-<script src="assets/dago-corpus-help-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
-<script src="assets/dago-corpus-v1-4-selftest.js?v=20260517-row50k-mapping-authority-v2"></script>
-<script src="assets/dago-corpus-v1-4-50k-mapping-fix.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-v1-4-core.js?v=20260517-rowops-v3"></script>
+<script src="assets/dago-corpus-workspace-v1-4.js?v=20260517-rowops-v3"></script>
+<script src="assets/dago-corpus-workspace-ops-v1-4.js?v=20260517-rowops-v3"></script>
+<script src="assets/dago-corpus-review-v1-4.js?v=20260517-rowops-v3"></script>
+<script src="assets/dago-corpus-xlsx-core-v1-4.js?v=20260517-rowops-v3"></script>
+<script src="assets/dago-corpus-mapping-io-v1-4.js?v=20260517-rowops-v3"></script>
+<script src="assets/dago-corpus-export-v1-4.js?v=20260517-rowops-v3"></script>
+<script src="assets/dago-corpus-xlsx-parts-v1-4.js?v=20260517-rowops-v3"></script>
+<script src="assets/dago-corpus-large-import-v1-4.js?v=20260517-rowops-v3"></script>
+<script src="assets/dago-corpus-mapping-validation-v1-4.js?v=20260517-rowops-v3"></script>
+<script src="assets/dago-corpus-help-v1-4.js?v=20260517-rowops-v3"></script>
+<script src="assets/dago-corpus-v1-4-selftest.js?v=20260517-rowops-v3"></script>
+<script src="assets/dago-corpus-v1-4-50k-mapping-fix.js?v=20260517-rowops-v3"></script>
+<script src="assets/dago-corpus-v1-4-turbo-chunk-v3-core.js?v=20260517-rowops-v3"></script>
+<script src="assets/dago-corpus-v1-4-rowops-v3.js?v=20260517-rowops-v3"></script>
 </body>
 </html>
