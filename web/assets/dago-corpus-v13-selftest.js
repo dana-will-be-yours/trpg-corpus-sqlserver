@@ -4,7 +4,7 @@ if(!enabled)return;
 function $(id){return document.getElementById(id)}
 function stat(msg){const s=$('status');if(s)s.textContent=msg;console.log('[v13 selftest]',msg)}
 window.addEventListener('error',e=>stat('v13 script error：'+(e.error&&e.error.message?e.error.message:e.message)));
-window.addEventListener('unhandledrejection',e=>stat('v13 promise error：'+(e.reason&&e.reason.message?e.reason.message:e.reason)));
+window.addEventListener('unhandledrejection',e=>stat('v13 promise error：'+(e.reason&&e.reason.message?e.reason:e.reason)));
 function assert(cond,msg){if(!cond)throw new Error(msg)}
 async function run(){
   stat('v13 selftest 啟動。');
@@ -78,6 +78,7 @@ async function run(){
     assert(afterTarget.speaker_code==='OBS_MISMATCH','mismatch row speaker_code should be OBS_MISMATCH');
     assert(String(afterTarget.is_in_character_text)==='0','mismatch row is_in_character_text should be 0');
     assert(/OBS_MISMATCH/.test(String(afterTarget.frontend_validation_warning||'')),'mismatch warning should mention OBS_MISMATCH');
+    assert(/偵測發話人未知，待確認/.test(String(afterTarget.frontend_validation_warning||'')),'mismatch warning should mention unknown speaker confirmation');
     passed=true;
   }finally{
     if(previousWorkspaceId&&workspace.setCurrentWorkspace){
