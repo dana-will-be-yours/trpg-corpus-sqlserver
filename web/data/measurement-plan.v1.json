@@ -1,0 +1,33 @@
+{
+  "schema_version": "measurement-plan-v1",
+  "instrument_version": "1.1-draft",
+  "freeze_status": "validation_required",
+  "total_items": 160,
+  "total_groups": 21,
+  "administration_timepoints": 10,
+  "public_release_scope": "group_metadata_only",
+  "formal_collection_enabled": false,
+  "groups": [
+    {"group": "A", "count": 21, "section": "篩選、去識別與系統紀錄", "timepoint": "Screen、T0", "respondent": "報名者與研究系統"},
+    {"group": "B", "count": 8, "section": "創作、遊戲與資料工具經驗", "timepoint": "T0", "respondent": "參與者"},
+    {"group": "C", "count": 5, "section": "TMS 專長分化", "timepoint": "P1／P2 期前與期後", "respondent": "參與者"},
+    {"group": "D", "count": 5, "section": "TMS 知識可信度", "timepoint": "P1／P2 期前與期後", "respondent": "參與者"},
+    {"group": "E", "count": 5, "section": "TMS 協調", "timepoint": "P1／P2 期前與期後", "respondent": "參與者"},
+    {"group": "F", "count": 5, "section": "SMM 任務模型", "timepoint": "P1／P2 期前與期後", "respondent": "參與者"},
+    {"group": "G", "count": 5, "section": "SMM 團隊互動模型", "timepoint": "P1／P2 期前與期後", "respondent": "參與者"},
+    {"group": "H", "count": 5, "section": "SMM 工具與資訊模型", "timepoint": "P1／P2 期前與期後", "respondent": "參與者"},
+    {"group": "I", "count": 14, "section": "設定回查、知識相似度與計時", "timepoint": "P1／P2 期後", "respondent": "參與者與研究系統"},
+    {"group": "J", "count": 7, "section": "心理安全", "timepoint": "T0、P1／P2 期後", "respondent": "參與者"},
+    {"group": "K", "count": 4, "section": "工具操弄共通檢核", "timepoint": "P1／P2 期後", "respondent": "參與者"},
+    {"group": "L", "count": 7, "section": "A 條件操弄檢核", "timepoint": "A 條件期後", "respondent": "參與者"},
+    {"group": "M", "count": 7, "section": "B 條件操弄檢核", "timepoint": "B 條件期後", "respondent": "參與者"},
+    {"group": "N", "count": 8, "section": "可行性與資料品質", "timepoint": "P1／P2 期後", "respondent": "參與者"},
+    {"group": "O", "count": 6, "section": "創作過程與主觀成果", "timepoint": "P1／P2 期後", "respondent": "參與者"},
+    {"group": "P", "count": 8, "section": "兩期後條件比較", "timepoint": "Final", "respondent": "參與者"},
+    {"group": "Q", "count": 14, "section": "AI 評分登記", "timepoint": "AI-rating", "respondent": "研究系統"},
+    {"group": "R", "count": 6, "section": "人類專家六構面評分", "timepoint": "Expert", "respondent": "專家"},
+    {"group": "S", "count": 4, "section": "專家開放式意見", "timepoint": "Expert", "respondent": "專家"},
+    {"group": "T", "count": 10, "section": "PL 半結構式訪談", "timepoint": "Interview", "respondent": "PL"},
+    {"group": "U", "count": 6, "section": "GM 半結構式訪談", "timepoint": "Interview", "respondent": "GM"}
+  ]
+}

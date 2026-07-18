@@ -2,55 +2,108 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TRPG Corpus SQL Server</title>
-  <style>
-    :root{color-scheme:dark;--bg:#121212;--panel:#202020;--line:#555;--text:#eee;--muted:#b8b8b8;--gold:#ffd866;--blue:#7db4ff}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:Verdana,Arial,"Microsoft JhengHei",sans-serif;line-height:1.65}
-    header,main{max-width:74rem;margin:auto;padding:1.25rem}
-    header{border-bottom:1px solid var(--line)}
-    h1,h2{color:var(--gold);margin:.2rem 0 .6rem}
-    a{color:var(--blue)}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:.8rem}
-    .card{border:1px solid var(--line);background:var(--panel);padding:1rem;border-radius:6px}
-    .muted{color:var(--muted)}
-    code{background:#080808;border:1px solid #444;padding:.08rem .25rem;border-radius:3px}
-  </style>
+  <meta name="theme-color" content="#172027">
+  <title>TRPG 共創研究網站</title>
+  <meta name="description" content="TRPG 共創研究網站，提供 AB／BA 交叉先導研究的資料蒐集、GM 指引、成果視覺化與本機研究工具入口。">
+  <link rel="stylesheet" href="web/assets/research-ui.css">
 </head>
-<body>
-  <header>
-    <h1>TRPG Corpus SQL Server</h1>
-    <p class="muted">研究者用 SQL Server 語料資料庫、da_go 劇情編輯頁與本機 API 文件入口。</p>
-  </header>
-  <main>
-    <section class="grid">
-      <article class="card">
-        <h2>逐字稿審閱</h2>
-        <p>匯入 TRPG 語音逐字稿或文字逐字稿，切分 turn，保留 raw、clean、verified 三層文本，匯出可送入 <code>stg.Utterance_Import</code> 的 JSON 或 CSV。</p>
-        <p><a href="web/transcript-review.html">開啟 transcript-review.html</a></p>
-      </article>
-      <article class="card">
-        <h2>劇情編輯</h2>
-        <p>編寫 da_go 的 passage、choice、檢定、條件與效果，並匯出可送入 <code>stg.DaGo_Researcher_Story_Import</code> 的 JSON。</p>
-        <p><a href="web/dago-authoring.html">開啟 dago-authoring.html</a></p>
-      </article>
-      <article class="card">
-        <h2>語料輸入</h2>
-        <p>將團錄、二創與世界觀資料轉成來源文件與文字區塊 staging。</p>
-        <p><a href="web/dago-corpus-input.html">開啟 dago-corpus-input.html</a></p>
-      </article>
-      <article class="card">
-        <h2>角色資料</h2>
-        <p>檢視角色資料頁與 HTML 圖表輸出。</p>
-        <p><a href="web/character-profile-report.html">開啟 character-profile-report.html</a></p>
-      </article>
-      <article class="card">
-        <h2>遊戲公開頁</h2>
-        <p>目前 da_go 遊戲公開網址。</p>
-        <p><a href="https://dana-will-be-yours.github.io/da_go/game.html?v=1.11.1-xiaocheng-local">開啟 da_go</a></p>
-      </article>
-    </section>
+<body class="research-tools portal-page focused-home">
+  <a class="skip-link" href="#main-content">跳到主內容</a>
+
+  <div class="home-geometry" aria-hidden="true">
+    <span class="geometry-corner geometry-corner-left"></span>
+    <span class="geometry-corner geometry-corner-right"></span>
+    <span class="geometry-field geometry-field-top"></span>
+    <span class="geometry-field geometry-field-bottom"></span>
+    <span class="geometry-ring"></span>
+    <span class="geometry-dots geometry-dots-left"></span>
+    <span class="geometry-dots geometry-dots-right"></span>
+  </div>
+
+  <main id="main-content" class="home-entry-main" tabindex="-1">
+    <article class="home-console" aria-labelledby="home-title">
+      <header class="home-console-header">
+        <p class="home-kicker">團隊層級交叉可行性先導研究</p>
+        <div class="home-title-rule" aria-hidden="true"></div>
+        <h1 id="home-title"><span>TRPG</span> 共創研究</h1>
+        <p class="home-intro">比較兩種敘事資料記錄條件下的共創歷程</p>
+      </header>
+
+      <nav class="home-primary-nav" aria-label="研究入口">
+        <div class="home-section-label">
+          <span>01</span>
+          <h2>研究入口</h2>
+          <i aria-hidden="true"></i>
+        </div>
+
+        <a class="home-entry home-entry-current" href="web/data-collection.html">
+          <span class="home-entry-index">01</span>
+          <span class="home-entry-copy">
+            <strong>資料蒐集</strong>
+            <small>題組、施測時點與資料狀態</small>
+          </span>
+          <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 16h20M18 8l8 8-8 8"/></svg>
+        </a>
+
+        <a class="home-entry" href="web/gm-prep.html">
+          <span class="home-entry-index">02</span>
+          <span class="home-entry-copy">
+            <strong>GM 資訊與指引</strong>
+            <small>場次規則、材料與角色分工</small>
+          </span>
+          <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 16h20M18 8l8 8-8 8"/></svg>
+        </a>
+
+        <a class="home-entry" href="web/results.html">
+          <span class="home-entry-index">03</span>
+          <span class="home-entry-copy">
+            <strong>成果視覺化</strong>
+            <small>分析圖型、資料需求與空狀態</small>
+          </span>
+          <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 16h20M18 8l8 8-8 8"/></svg>
+        </a>
+      </nav>
+
+      <section class="study-facts home-facts" aria-labelledby="facts-title">
+        <div class="home-section-label">
+          <span>02</span>
+          <h2 id="facts-title">研究條件</h2>
+          <i aria-hidden="true"></i>
+        </div>
+        <article><span>01</span><div><small>研究設計</small><strong>AB／BA 兩期交叉</strong></div></article>
+        <article><span>02</span><div><small>團隊配置</small><strong>1 GM ＋ 4 PL</strong></div></article>
+        <article><span>03</span><div><small>每期場次</small><strong>120–150 分鐘</strong></div></article>
+        <article><span>04</span><div><small>主要結果</small><strong>可行性指標</strong></div></article>
+      </section>
+
+      <nav class="home-tools" aria-label="研究工具">
+        <div class="home-section-label">
+          <span>03</span>
+          <h2>研究工具</h2>
+          <i aria-hidden="true"></i>
+        </div>
+        <div class="home-tool-list">
+          <a class="home-tool" href="web/transcript-review.html">
+            <svg viewBox="0 0 40 40" aria-hidden="true">
+              <path d="M7 5h20v22H7zM12 11h10M12 16h10M12 21h6M25 26l8 8M24 29a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z"/>
+            </svg>
+            <span>逐字稿審閱</span>
+          </a>
+          <a class="home-tool" href="web/dago-corpus-input.html">
+            <svg viewBox="0 0 40 40" aria-hidden="true">
+              <path d="M20 4v21M13 11l7-7 7 7M7 23v11h26V23"/>
+            </svg>
+            <span>語料輸入</span>
+          </a></div>
+      </nav>
+
+      <footer class="home-signature">
+        <div><span>04</span><strong>研究主題</strong></div>
+        <p>COC7TH <b aria-hidden="true">｜</b> 敘事資料 <b aria-hidden="true">｜</b> 團隊共創</p>
+      </footer>
+    </article>
   </main>
 </body>
 </html>

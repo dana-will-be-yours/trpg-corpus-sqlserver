@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>成果視覺化 | TRPG 共創研究</title>
+  <meta name="description" content="TRPG 共創研究成果視覺化規格，列出可行性、交叉設計、SMM、TMS、設定回查、故事評分、信度與質性資料的圖表類型。">
+  <link rel="stylesheet" href="assets/research-ui.css">
+</head>
+<body class="research-tools portal-page results-page">
+  <a class="skip-link" href="#main-content">跳到主內容</a>
+  <header class="site-header">
+    <a class="brand" href="../index.html">
+      <strong>TRPG 共創研究</strong>
+      <span>成果視覺化</span>
+    </a>
+    <nav class="site-nav" aria-label="主要頁面">
+      <a href="../index.html">首頁</a>
+      <a href="data-collection.html">資料蒐集</a>
+      <a href="gm-prep.html">GM 資訊</a>
+      <a href="results.html" aria-current="page">成果視覺化</a>
+      <a href="transcript-review.html">逐字稿審閱</a>
+    </nav>
+  </header>
+
+  <main id="main-content" class="portal-main" tabindex="-1">
+    <section class="module-hero results-hero">
+      <div>
+        <p class="kicker">分析集合 FAS／PPS／MAS</p>
+        <h1>依研究問題選擇圖表，不先填入不存在的結果</h1>
+        <p>成果頁保留可行性、期間與序列、團隊內 A／B 配對、SMM、TMS、設定回查、故事評分、ICC 與質性整合的顯示位置。正式觀察值尚未蒐集，因此所有圖表目前維持空狀態。</p>
+      </div>
+      <div class="hero-state" aria-label="成果資料狀態">
+        <span class="status-badge pending">正式資料 0 筆</span>
+        <strong>目前只有圖表規格</strong>
+        <p>合成資料只用於介面與程式測試；正式成果發布前需核對資料版本、分析集合、列數與雜湊。</p>
+      </div>
+    </section>
+
+    <section class="results-principles" aria-label="成果顯示原則">
+      <article><span>01</span><strong>全部觀察點</strong><p>團隊資料先顯示原始點與配對線，再加摘要量。</p></article>
+      <article><span>02</span><strong>期間與序列分開</strong><p>AB、BA、第一期與第二期保留獨立識別。</p></article>
+      <article><span>03</span><strong>估計值與區間</strong><p>小樣本以差值、分布與不確定區間解讀。</p></article>
+      <article><span>04</span><strong>缺漏可追溯</strong><p>退出、技術失敗、漏評與偏離各自列示。</p></article>
+    </section>
+
+    <section class="viz-catalogue" aria-labelledby="catalogue-title">
+      <div class="section-heading">
+        <h2 id="catalogue-title">預定圖表類型與資料需求</h2>
+        <p>每張圖先回答一項研究問題，圖說需列出分析單位、集合、條件、期間、序列與資料版本。</p>
+      </div>
+
+      <figure class="viz-card">
+        <div class="viz-empty viz-flow" role="img" aria-label="參與流程圖目前無正式資料"><span>尚待招募資料</span></div>
+        <figcaption><strong>參與流程圖</strong><span>招募、納入、分派、兩期完成與分析集合人數</span><code>team / member / withdrawal</code></figcaption>
+      </figure>
+      <figure class="viz-card">
+        <div class="viz-empty viz-interval" role="img" aria-label="可行性比例區間圖目前無正式資料"><span>尚待可行性資料</span></div>
+        <figcaption><strong>比例與區間點圖</strong><span>招募率、保留率、兩期完成率、資料完整率</span><code>FAS；estimate + interval</code></figcaption>
+      </figure>
+      <figure class="viz-card">
+        <div class="viz-empty viz-paired" role="img" aria-label="團隊內配對軌跡圖目前無正式資料"><span>尚待 A／B 配對值</span></div>
+        <figcaption><strong>團隊內配對軌跡圖</strong><span>每隊 A 與 B 的原始值、方向與差值</span><code>team；PPS</code></figcaption>
+      </figure>
+      <figure class="viz-card">
+        <div class="viz-empty viz-sequence" role="img" aria-label="序列期間圖目前無正式資料"><span>尚待 AB／BA 期別值</span></div>
+        <figcaption><strong>序列 × 期間分面圖</strong><span>監看期別、序列、題本與工具學習延續</span><code>sequence / period / task</code></figcaption>
+      </figure>
+      <figure class="viz-card">
+        <div class="viz-empty viz-scatter" role="img" aria-label="SMM 散點圖目前無正式資料"><span>尚待相似度與正確性</span></div>
+        <figcaption><strong>設定知識二維散點圖</strong><span>知識相似度與知識正確性分開計算後聯合顯示</span><code>knowledge_similarity / knowledge_accuracy</code></figcaption>
+      </figure>
+      <figure class="viz-card">
+        <div class="viz-empty viz-profile" role="img" aria-label="TMS 構面圖目前無正式資料"><span>尚待三構面分數</span></div>
+        <figcaption><strong>TMS 構面點線圖</strong><span>專長分化、知識可信度與協調的期前期後變化</span><code>specialization / credibility / coordination</code></figcaption>
+      </figure>
+      <figure class="viz-card">
+        <div class="viz-empty viz-query" role="img" aria-label="設定回查組合圖目前無正式資料"><span>尚待回查紀錄</span></div>
+        <figcaption><strong>設定回查三聯圖</strong><span>正確率、來源配對與查找時間分面呈現</span><code>query-item；accuracy / source / time</code></figcaption>
+      </figure>
+      <figure class="viz-card">
+        <div class="viz-empty viz-rating" role="img" aria-label="故事評分分布圖目前無正式資料"><span>尚待盲評分數</span></div>
+        <figcaption><strong>故事評分分布與配對差圖</strong><span>六構面的專家原始分數、條件分布與團隊差值</span><code>story / rater / criterion</code></figcaption>
+      </figure>
+      <figure class="viz-card">
+        <div class="viz-empty viz-forest" role="img" aria-label="ICC 區間圖目前無正式資料"><span>尚待三名專家評分</span></div>
+        <figcaption><strong>ICC 區間森林圖</strong><span>各構面的 ICC(2,1)、ICC(2,3) 與 95% 信賴區間</span><code>ICC estimate / lower / upper</code></figcaption>
+      </figure>
+      <figure class="viz-card">
+        <div class="viz-empty viz-matrix" role="img" aria-label="缺漏矩陣目前無正式資料"><span>尚待完成與缺漏狀態</span></div>
+        <figcaption><strong>缺漏與偏離矩陣</strong><span>依團隊、期別、資料階段與原因顯示完整性</span><code>completion / missing_reason / deviation</code></figcaption>
+      </figure>
+      <figure class="viz-card">
+        <div class="viz-empty viz-theme" role="img" aria-label="質性主題矩陣目前無正式資料"><span>尚待訪談編碼</span></div>
+        <figcaption><strong>質性主題矩陣</strong><span>PL 與 GM 對資料取回、分工、負荷及跨期延續的主題分布</span><code>QUAL；theme / role / condition</code></figcaption>
+      </figure>
+      <figure class="viz-card">
+        <div class="viz-empty viz-table" role="img" aria-label="研究結果表目前無正式資料"><span>尚待凍結分析資料</span></div>
+        <figcaption><strong>估計值結果表</strong><span>樣本數、A／B 摘要、配對差、不確定區間、缺漏與分析集合</span><code>data_version / set / n / estimate</code></figcaption>
+      </figure>
+    </section>
+
+    <section class="reporting-order" aria-labelledby="reporting-title">
+      <div class="section-heading">
+        <h2 id="reporting-title">結果頁閱讀順序</h2>
+        <p>可行性判斷先於 A／B 探索性差異，敏感度分析放在主要描述之後。</p>
+      </div>
+      <ol>
+        <li><strong>樣本與流程</strong><span>招募、分派、完成、退出、缺漏與安全事件。</span></li>
+        <li><strong>程序可行性</strong><span>兩期完成、工具執行、資料完整、AI 生成與評分完成。</span></li>
+        <li><strong>探索性 A／B 差異</strong><span>SMM、TMS、設定回查、故事評分與主觀成果。</span></li>
+        <li><strong>信度與敏感度</strong><span>ICC、第一期資料、精確秩次與最小混合模型。</span></li>
+        <li><strong>質性整合</strong><span>以訪談解釋工具使用、分工、負荷與跨期延續。</span></li>
+      </ol>
+    </section>
+
+    <section class="next-panel" aria-label="回到資料蒐集">
+      <div><p class="kicker">資料來源</p><h2>回到量測時序與題組配置</h2><p>每項圖表需連回相同的變項碼、期別、條件、題本及分析集合。</p></div>
+      <a class="button primary" href="data-collection.html">查看資料蒐集設計</a>
+    </section>
+  </main>
+</body>
+</html>
