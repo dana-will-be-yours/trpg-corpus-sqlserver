@@ -5,7 +5,7 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>資料蒐集 | TRPG 共創研究</title>
-  <meta name="description" content="TRPG 共創研究資料蒐集設計，整理 A 至 U 題組、施測時點、填答對象、公開限制與工具使用條件。">
+  <meta name="description" content="TRPG 共創研究資料蒐集設計，整理 A 至 U 題組、施測時點、填答對象與量測欄位。">
   <link rel="stylesheet" href="assets/research-ui.css">
 </head>
 <body class="research-tools portal-page collection-page">
@@ -31,11 +31,6 @@
         <h1>依十個時點安排研究資料蒐集</h1>
         <p>資料蒐集由 A 至 U 共 21 組、160 筆題目與系統欄位組成，涵蓋篩選、基線、兩期前後測、設定回查、期末比較、訪談、人工專家評分與 AI 評分登記。</p>
       </div>
-      <div class="hero-state" aria-label="資料使用範圍">
-        <span class="status-badge pending">資料使用範圍</span>
-        <strong>內容效度審查與認知訪談</strong>
-        <p>本頁只呈現題組與資料契約摘要，不接收、保存或傳送正式填答。</p>
-      </div>
     </section>
 
     <section class="metric-strip" aria-label="量測工具摘要">
@@ -43,24 +38,6 @@
       <article><strong>21</strong><span>A–U 題組</span></article>
       <article><strong>10</strong><span>施測時點</span></article>
       <article><strong>3</strong><span>資料存取層級</span></article>
-    </section>
-
-    <section class="mode-strip" aria-label="資料存取模式">
-      <article class="mode-card public-mode">
-        <span>GitHub Pages</span>
-        <strong>題組摘要與資料字典</strong>
-        <p>公開端只顯示組別、題數、施測時點、資料治理說明與合成示例。</p>
-      </article>
-      <article class="mode-card local-mode">
-        <span>受控資料區</span>
-        <strong>正式填答與版本紀錄</strong>
-        <p>正式資料經本機 API 送入受控資料庫，保存工具版本、時間、狀態與缺漏原因。</p>
-      </article>
-      <article class="mode-card restricted-mode">
-        <span>受控私人資料區</span>
-        <strong>身分、同意與原始資料</strong>
-        <p>真名對照、同意紀錄、錄音、原始逐字稿與原始填答不進公開儲存庫。</p>
-      </article>
     </section>
 
     <section class="collection-timeline" aria-labelledby="timeline-title">
@@ -82,7 +59,6 @@
     <section class="instrument-section" aria-labelledby="instrument-title">
       <div class="section-heading">
         <h2 id="instrument-title">A 至 U 題組配置</h2>
-        <p>題組資料依量測工具 1.1 整理；使用前須完成內容效度審查、認知訪談及版本凍結。</p>
       </div>
       <div class="table-wrap instrument-table-wrap" tabindex="0" aria-label="題組配置表，可水平捲動">
         <table class="instrument-table">
@@ -127,20 +103,10 @@
           <li>開始與提交時間、完成狀態、缺漏與退出原因</li>
         </ul>
       </article>
-      <article>
-        <p class="kicker">工具使用前</p>
-        <h2>工具啟用條件</h2>
-        <ul>
-          <li>倫理核准或豁免與同意文件完成。</li>
-          <li>題項內容效度審查與認知訪談完成。</li>
-          <li>T1 至 T4 答案鍵與來源錨點完成。</li>
-          <li>本機 API、SQL、缺漏規則與全程合成測試通過。</li>
-        </ul>
-      </article>
     </section>
 
     <section class="next-panel" aria-label="下一頁">
-      <div><p class="kicker">下一頁</p><h2>進入 GM 資訊與指引</h2><p>確認兩期 COC7TH 場次的材料、時間、角色責任及條件隔離。</p></div>
+      <div><h2>GM 資訊與指引</h2></div>
       <a class="button primary" href="gm-prep.html">閱讀 GM 指引</a>
     </section>
   </main>

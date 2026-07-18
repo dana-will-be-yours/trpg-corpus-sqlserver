@@ -3,78 +3,131 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TRPG 逐字稿審閱與匯出器</title>
+  <title>逐字稿審閱 | TRPG Corpus SQL Server</title>
+  <meta name="description" content="TRPG 逐字稿審閱工具，支援逐筆核對、欄位檢查與 JSON 或 CSV 匯出。">
   <link rel="stylesheet" href="assets/transcript-review.css">
+  <link rel="stylesheet" href="assets/research-ui.css">
 </head>
-<body>
+<body class="research-tools transcript-review-page">
+  <a class="skip-link" href="#main-content">跳到主內容</a>
   <header class="page-header">
     <div>
-      <h1>TRPG 逐字稿審閱與匯出器</h1>
-      <p>瀏覽器端整理工具。資料只在本機瀏覽器處理，匯出 JSON 或 CSV 後再由 SSMS 22 匯入 TRPG_Corpus_DB 的 stg.Utterance_Import。</p>
+      <h1>逐字稿審閱</h1>
+      <p>逐筆核對發言、說話者與語料欄位。</p>
     </div>
     <nav>
       <a href="../index.html">首頁</a>
-      <a href="../database/23_stg_Utterance_Import.sql">stg.Utterance_Import</a>
+      <a href="gm-prep.html">GM 準備</a>
+      <a href="transcript-review.html" aria-current="page">逐字稿審閱</a>
+      <a href="dago-corpus-input.html">語料輸入</a>
+      <a href="dago-corpus-review.html">語料審閱</a>
     </nav>
   </header>
 
-  <main>
+  <main id="main-content" tabindex="-1">
+    <p class="privacy-notice" role="note">含身分資訊或未去識別的檔案請存放於受控儲存位置。</p>
+
     <section class="panel">
       <h2>1. 批次與預設值</h2>
       <div class="form-grid">
-        <label>batch_code<input id="batchCode" value="BATCH_TRPG_UTTERANCE_001"></label>
-        <label>project_code<input id="projectCode" value="TRPG_COCREATION"></label>
-        <label>team_code<input id="teamCode" value="TEAM01"></label>
-        <label>session_code<input id="sessionCode" value="S01"></label>
-        <label>scene_code<input id="sceneCode" value="SCENE01"></label>
-        <label>imported_by<input id="importedBy" value="researcher"></label>
+        <label class="field-label"><span class="field-title">批次代碼 <span class="field-code">batch_code</span></span><input id="batchCode" value="BATCH_TRPG_UTTERANCE_001"><span class="field-help">每次整理逐字稿建立一組匯入批次。</span></label>
+        <label class="field-label"><span class="field-title">專案代碼 <span class="field-code">project_code</span></span><input id="projectCode" value="TRPG_COCREATION"><span class="field-help">連接研究專案、資料庫與後續分析資料。</span></label>
+        <label class="field-label"><span class="field-title">團隊代碼 <span class="field-code">team_code</span></span><input id="teamCode" value="TEAM01"><span class="field-help">標記參與團隊或序列分組。</span></label>
+        <label class="field-label"><span class="field-title">場次代碼 <span class="field-code">session_code</span></span><input id="sessionCode" value="S01"><span class="field-help">標記單一 TRPG 遊戲場次。</span></label>
+        <label class="field-label"><span class="field-title">場景代碼 <span class="field-code">scene_code</span></span><input id="sceneCode" value="SCENE01"><span class="field-help">預設寫入本次切分資料列的場景欄位。</span></label>
+        <label class="field-label"><span class="field-title">匯入者 <span class="field-code">imported_by</span></span><input id="importedBy" value="researcher"><span class="field-help">記錄本次整理資料的研究者或資料整理者。</span></label>
       </div>
     </section>
 
     <section class="panel">
       <h2>2. 匯入逐字稿</h2>
       <p class="hint">支援 TXT、JSON、CSV。TXT 建議格式：<code>[00:01:03] GM：你們來到荒廢的祠堂。</code></p>
-      <div class="toolbar">
-        <input id="fileInput" type="file" accept=".txt,.csv,.json,text/plain,text/csv,application/json">
-        <button id="loadSampleBtn" type="button">載入範例</button>
-        <button id="parseBtn" type="button">切分逐字稿</button>
-        <button id="clearBtn" type="button" class="secondary">清空</button>
+      <div class="action-sequence" aria-label="逐字稿匯入操作">
+        <div class="action-group action-group-ingest">
+          <span class="action-step">1</span>
+          <div class="action-copy">
+            <strong>匯入素材</strong>
+            <small>讀取 TXT、JSON、CSV 或範例資料</small>
+          </div>
+          <div class="action-buttons">
+            <input id="fileInput" type="file" accept=".txt,.csv,.json,text/plain,text/csv,application/json">
+            <button id="loadSampleBtn" type="button" class="action-ingest">載入範例</button>
+          </div>
+        </div>
+        <div class="action-group action-group-process">
+          <span class="action-step">2</span>
+          <div class="action-copy">
+            <strong>切分內容</strong>
+            <small>依時間碼與說話者建立審閱列</small>
+          </div>
+          <div class="action-buttons">
+            <button id="parseBtn" type="button" class="action-process">切分逐字稿</button>
+          </div>
+        </div>
+        <div class="action-group action-group-danger">
+          <span class="action-step">3</span>
+          <div class="action-copy">
+            <strong>重置輸入</strong>
+            <small>清除目前文字與表格資料</small>
+          </div>
+          <div class="action-buttons">
+            <button id="clearBtn" type="button" class="action-danger">清空</button>
+          </div>
+        </div>
       </div>
       <textarea id="rawText" rows="10" placeholder="貼上逐字稿。每列一個發言，格式可為：[00:01:03] GM：內容"></textarea>
     </section>
 
     <section class="panel">
       <h2>3. 審閱表格</h2>
-      <div class="toolbar">
-        <button id="validateBtn" type="button">前端檢查</button>
-        <button id="addRowBtn" type="button">新增空白列</button>
-        <button id="exportJsonBtn" type="button">匯出 JSON</button>
-        <button id="exportCsvBtn" type="button">匯出 CSV UTF-8</button>
+      <div class="action-sequence compact" aria-label="逐字稿審閱操作">
+        <div class="action-group action-group-check">
+          <span class="action-step">1</span>
+          <div class="action-copy">
+            <strong>檢查資料</strong>
+            <small>先確認欄位與列狀態</small>
+          </div>
+          <div class="action-buttons">
+            <button id="validateBtn" type="button" class="action-check">前端檢查</button>
+            <button id="addRowBtn" type="button" class="action-process">新增空白列</button>
+          </div>
+        </div>
+        <div class="action-group action-group-export">
+          <span class="action-step">2</span>
+          <div class="action-copy">
+            <strong>匯出結果</strong>
+            <small>審閱後輸出研究資料</small>
+          </div>
+          <div class="action-buttons">
+            <button id="exportJsonBtn" type="button" class="action-export">匯出 JSON</button>
+            <button id="exportCsvBtn" type="button" class="action-export">匯出 CSV UTF-8</button>
+          </div>
+        </div>
       </div>
       <div id="statusBar" class="status">尚未載入資料。</div>
       <div class="table-wrap">
         <table id="utteranceTable">
           <thead>
             <tr>
-              <th>row</th>
-              <th>turn_no</th>
-              <th>scene_code</th>
-              <th>speaker_type</th>
-              <th>speaker_code</th>
-              <th>function</th>
-              <th>IC</th>
-              <th>GM旁白</th>
-              <th>規則</th>
-              <th>決策</th>
-              <th>知識</th>
-              <th>start</th>
-              <th>raw</th>
-              <th>clean</th>
-              <th>verified</th>
-              <th>review</th>
-              <th>include</th>
-              <th>error</th>
-              <th>操作</th>
+              <th><span class="schema-head"><span class="schema-title">列號</span><span class="schema-code">source_row_no</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">回合</span><span class="schema-code">turn_no</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">場景代碼</span><span class="schema-code">scene_code</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">發話者類型</span><span class="schema-code">speaker_type</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">說話者代碼</span><span class="schema-code">speaker_code</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">語句功能</span><span class="schema-code">utterance_function</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">角色內</span><span class="schema-code">is_in_character</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">GM 旁白</span><span class="schema-code">is_gm_narration</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">規則討論</span><span class="schema-code">is_rule_discussion</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">決策點</span><span class="schema-code">is_decision_point</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">知識類型</span><span class="schema-code">knowledge_type</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">開始時間</span><span class="schema-code">start_timecode</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">原始文字</span><span class="schema-code">utterance_text_raw</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">清理文字</span><span class="schema-code">utterance_text_clean</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">已核對</span><span class="schema-code">is_verified</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">審閱狀態</span><span class="schema-code">review_status</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">納入分析</span><span class="schema-code">include_in_analysis</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">錯誤訊息</span><span class="schema-code">validation_error</span></span></th>
+              <th><span class="schema-head"><span class="schema-title">操作</span><span class="schema-code">row_action</span></span></th>
             </tr>
           </thead>
           <tbody></tbody>

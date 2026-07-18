@@ -3,66 +3,84 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>trpg corpus input v1.4</title>
+<title>語料輸入 | TRPG Corpus SQL Server</title>
+<meta name="description" content="TRPG 語料輸入工具，整理來源文件、Speaker Mapping、IndexedDB 暫存區與暫存資料匯出。">
 <style>
 body{font-family:Microsoft JhengHei,Noto Sans TC,sans-serif;margin:16px;background:#f4f1ea;color:#24211d}main{max-width:1700px;margin:auto}.layout{display:grid;grid-template-columns:340px 1fr;gap:12px}form,section{background:#fff;border:1px solid #ccc;padding:12px;margin:8px 0}input,textarea,select,button{font:inherit;margin:3px;padding:6px}textarea{min-height:120px}.table-wrap{overflow:auto;max-height:620px}table{border-collapse:collapse;width:max-content;min-width:100%}th,td{border:1px solid #ddd;padding:6px;vertical-align:top}td textarea{width:420px;min-height:70px}.err{color:#900;white-space:pre-wrap}.warn,.note{color:#850;white-space:pre-wrap}.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}.mapping-wrap{max-height:360px;overflow:auto}.mapping-table{table-layout:fixed;width:100%;min-width:980px}.mapping-table th:nth-child(1),.mapping-table td:nth-child(1){width:150px;min-width:150px;position:sticky;left:0;background:#fff;z-index:2}.mapping-table th:nth-child(2),.mapping-table td:nth-child(2){width:220px}.mapping-table th:nth-child(3),.mapping-table td:nth-child(3){width:120px}.mapping-table th:nth-child(4),.mapping-table td:nth-child(4){width:220px}.mapping-table th:nth-child(5),.mapping-table td:nth-child(5){width:180px}.mapping-table th:nth-child(6),.mapping-table td:nth-child(6){width:220px}.mapping-table input,.mapping-table select{box-sizing:border-box;width:100%;max-width:100%}.mapping-table td{white-space:nowrap}.mapping-table td:first-child button{padding:3px 5px;margin:1px}@media(max-width:1000px){.layout{grid-template-columns:1fr}}
 </style>
+<link rel="stylesheet" href="assets/research-ui.css">
 </head>
-<body>
-<main>
-<h1>trpg corpus input v1.4</h1>
-<p>v1.4 由 v1.4 總驗收版複製建立，保留 Speaker Mapping、IndexedDB 工作區、前端驗證、JSON / TSV / XLSX 匯入匯出與分批匯出功能，作為下一步論文銜接計畫的穩定基準。</p>
+<body class="research-tools corpus-input-page">
+<a class="skip-link" href="#main-content">跳到主內容</a>
+<div class="tool-topbar">
+<strong>TRPG Corpus SQL Server</strong>
+<nav aria-label="工具導覽"><a href="../index.html">首頁</a><a href="gm-prep.html">GM 準備</a><a href="transcript-review.html">逐字稿審閱</a><a href="dago-corpus-input.html" aria-current="page">語料輸入</a><a href="dago-corpus-review.html">語料審閱</a></nav>
+</div>
+<main id="main-content" tabindex="-1">
+<h1>語料輸入</h1>
+<p>管理逐字稿來源、說話者對應與語料欄位。</p>
+<p class="privacy-notice" role="note">含身分資訊或未去識別的檔案請存放於受控儲存位置。</p>
 <div class="layout">
 <form id="sourceForm">
 <h2>來源與批次</h2>
-<label>project_code<input name="project_code" value="DAGO"></label>
-<label>team_code<input name="team_code" value="DAGO-T01"></label>
-<label>session_code<input name="session_code" value="DA20-CORPUS-RPG-001"></label>
-<label>batch_code<input name="batch_code" value="DAGO_HTML_UTT_001"></label>
-<label>source_url<input name="source_url" value=""></label>
-<label>source_file_name<input name="source_file_name" value="dago-chronicle.html"></label>
-<details open><summary>欄位說明</summary><p>可貼上純文字逐字稿，也可上傳 .docx。raw text 寫入 utterance_text_raw；clean preview 寫入 utterance_text_clean。v1.4 IndexedDB 工作區支援分頁、speaker filter、單列新增、刪除、分割、Speaker Mapping 匯入匯出與 cursor chunk 匯出。</p></details>
+<label class="field-label"><span class="field-title">專案代碼 <span class="field-code">project_code</span></span><input name="project_code" value="DAGO"><span class="field-help">用於連接同一研究專案的語料批次。</span></label>
+<label class="field-label"><span class="field-title">團隊代碼 <span class="field-code">team_code</span></span><input name="team_code" value="DAGO-T01"><span class="field-help">對應本研究的團隊或場次組別。</span></label>
+<label class="field-label"><span class="field-title">場次代碼 <span class="field-code">session_code</span></span><input name="session_code" value="DA20-CORPUS-RPG-001"><span class="field-help">標記逐字稿或語料來源的單一遊戲場次。</span></label>
+<label class="field-label"><span class="field-title">批次代碼 <span class="field-code">batch_code</span></span><input name="batch_code" value="DAGO_HTML_UTT_001"><span class="field-help">每次匯入建立一組批次代碼，便於回查。</span></label>
+<label class="field-label"><span class="field-title">來源網址 <span class="field-code">source_url</span></span><input name="source_url" value=""><span class="field-help">公開示例或可公開來源才填入網址。</span></label>
+<label class="field-label"><span class="field-title">來源檔名 <span class="field-code">source_file_name</span></span><input name="source_file_name" value="dago-chronicle.html"><span class="field-help">記錄原始文字或 Word 檔名。</span></label>
+<details><summary>欄位說明</summary><p>研究者貼上純文字逐字稿，或上傳 .docx。原始文字寫入 utterance_text_raw；清理預覽寫入 utterance_text_clean。IndexedDB 暫存區支援分頁、說話者篩選、單列新增、刪除、分割、說話者對應匯入匯出與游標分批匯出。</p></details>
+<div class="action-sequence source-actions" aria-label="語料輸入操作">
+<div class="action-group action-group-ingest"><span class="action-step">1</span><div class="action-copy"><strong>匯入素材</strong><small>上傳 Word 或貼上逐字稿文字</small></div><div class="action-buttons"><input id="docxFile" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"><button type="button" id="importDocx" class="action-ingest">上傳 Word .docx</button></div></div>
+<div class="action-group action-group-process"><span class="action-step">2</span><div class="action-copy"><strong>解析與補列</strong><small>建立暫存資料列並修復文字</small></div><div class="action-buttons"><button type="button" id="parseText" class="action-process">解析</button><button type="button" id="repairText" class="action-check">修復</button><button type="button" id="addRow" class="action-process">新增空列</button></div></div>
+<div class="action-group action-group-nav"><span class="action-step">3</span><div class="action-copy"><strong>前往審閱</strong><small>開啟分頁審閱與匯出頁</small></div><div class="action-buttons"><button type="button" id="openReview" class="action-nav">開啟審閱頁</button></div></div>
+<div class="action-group action-group-danger"><span class="action-step">4</span><div class="action-copy"><strong>清除資料</strong><small>清除目前列或本機暫存區</small></div><div class="action-buttons"><button type="button" id="clearRows" class="action-danger">清空列</button><button type="button" id="clearIndexedDbWorkspace" class="action-danger">清除本機暫存區</button></div></div>
+</div>
 <textarea id="sourceText" placeholder="貼上 TRPG 逐字稿，或使用上傳 Word .docx"></textarea>
-<p><input id="docxFile" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"><button type="button" id="importDocx">上傳 Word .docx</button><button type="button" id="parseText">解析</button><button type="button" id="repairText">修復</button><button type="button" id="addRow">新增空列</button><button type="button" id="clearRows">清空列</button><button type="button" id="openReview">開啟審閱工作頁</button><button type="button" id="clearIndexedDbWorkspace">清除本機工作區</button></p>
-<div class="bar"><label>壓力測試列數<input id="stressRowCount" type="number" value="100" min="1" step="100"></label><button type="button" id="generateStressRows">產生壓力測試資料</button></div>
-<div id="status">ready</div>
-<div id="workspaceStatus" class="note">IndexedDB 工作區：尚未檢查</div>
+<div class="action-sequence compact stress-actions" aria-label="負載測試操作"><div class="action-group action-group-check"><span class="action-step">測</span><div class="action-copy"><strong>大量資料測試</strong><small>產生指定列數供本機測速</small></div><div class="action-buttons"><label>負載測試列數<input id="stressRowCount" type="number" value="100" min="1" step="100"></label><button type="button" id="generateStressRows" class="action-check">產生負載測試資料</button></div></div></div>
+<div id="status" aria-live="polite"></div>
+<div id="workspaceStatus" class="note" aria-live="polite"></div>
 </form>
 <div>
 <section>
-<h2>Speaker Mapping</h2>
-<button type="button" id="autoMapping">自動建立 mapping</button><button type="button" id="addMapping">新增 mapping</button><button type="button" id="applyMapping">套用 Speaker Mapping</button>
-<div class="bar"><input id="mappingImportFile" type="file" accept=".json,.tsv,.txt,.xlsx"><button type="button" id="importMapping">匯入 Speaker Mapping</button><button type="button" id="downloadMappingJson">下載 Mapping JSON</button><button type="button" id="downloadMappingTsv">下載 Mapping UTF-16LE TSV</button><button type="button" id="downloadMappingXlsx">下載 Mapping XLSX</button></div>
-<div class="table-wrap mapping-wrap"><table class="mapping-table"><thead><tr><th>操作</th><th>raw_speaker_label</th><th>speaker_type</th><th>speaker_code</th><th>target_table</th><th>note</th></tr></thead><tbody id="mappingRows"></tbody></table></div>
+<h2>說話者對應</h2>
+<div class="action-sequence compact mapping-actions" aria-label="說話者對應操作">
+<div class="action-group action-group-process"><span class="action-step">1</span><div class="action-copy"><strong>建立對應</strong><small>新增或自動建立說話者規則</small></div><div class="action-buttons"><button type="button" id="autoMapping" class="action-process">自動建立對應</button><button type="button" id="addMapping" class="action-nav">新增對應</button><button type="button" id="applyMapping" class="action-process">套用說話者對應</button></div></div>
+<div class="action-group action-group-ingest"><span class="action-step">2</span><div class="action-copy"><strong>匯入對應</strong><small>讀取既有 JSON、TSV 或 XLSX</small></div><div class="action-buttons"><input id="mappingImportFile" type="file" accept=".json,.tsv,.txt,.xlsx"><button type="button" id="importMapping" class="action-ingest">匯入說話者對應</button></div></div>
+<div class="action-group action-group-export"><span class="action-step">3</span><div class="action-copy"><strong>下載對應</strong><small>保存說話者規則</small></div><div class="action-buttons"><button type="button" id="downloadMappingJson" class="action-export">下載對應 JSON</button><button type="button" id="downloadMappingTsv" class="action-export">下載對應 UTF-16LE TSV</button><button type="button" id="downloadMappingXlsx" class="action-export">下載對應 XLSX</button></div></div>
+</div>
+<div class="table-wrap mapping-wrap"><table class="mapping-table"><thead><tr><th><span class="schema-head"><span class="schema-title">操作</span><span class="schema-code">row_action</span></span></th><th><span class="schema-head"><span class="schema-title">原始說話者</span><span class="schema-code">raw_speaker_label</span></span></th><th><span class="schema-head"><span class="schema-title">發話者類型</span><span class="schema-code">speaker_type</span></span></th><th><span class="schema-head"><span class="schema-title">說話者代碼</span><span class="schema-code">speaker_code</span></span></th><th><span class="schema-head"><span class="schema-title">目標資料表</span><span class="schema-code">target_table</span></span></th><th><span class="schema-head"><span class="schema-title">備註</span><span class="schema-code">note</span></span></th></tr></thead><tbody id="mappingRows"></tbody></table></div>
 </section>
 <section>
 <h2>stg.Utterance_Import 預覽</h2>
 <div id="rowSummary" class="note">目前總列數：0</div>
-<div class="bar"><label>顯示發話者<select id="speakerFilter"><option value="__ALL__">all</option></select></label><label>每頁<select id="pageSize"><option value="50">50</option><option value="100" selected>100</option><option value="200">200</option><option value="0">全部</option></select></label><button type="button" id="pagePrev">上一頁</button><span id="pageInfo">第 1 / 1 頁</span><button type="button" id="pageNext">下一頁</button></div>
-<div class="bar"><button type="button" id="validateBtn">前端驗證</button><button type="button" id="downloadJson">下載 JSON</button><button type="button" id="downloadXlsx">下載 XLSX</button><button type="button" id="downloadTsv">下載 UTF-16LE TSV</button><label>分批列數<input id="partSize" type="number" value="1000" min="100" step="100"></label><button type="button" id="downloadJsonParts">分批 JSON</button><button type="button" id="downloadXlsxParts">分批 XLSX</button><button type="button" id="downloadTsvParts">分批 TSV</button></div>
-<div class="table-wrap"><table><thead><tr><th>操作</th><th>row</th><th>speaker_type</th><th>speaker_code</th><th>speaker_label_raw</th><th>function</th><th>start_timecode</th><th>raw text</th><th>clean preview</th><th>scene_code</th><th>frontend_error</th><th>frontend_warning</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="action-sequence compact preview-actions" aria-label="暫存資料預覽操作">
+<div class="action-group action-group-nav"><span class="action-step">1</span><div class="action-copy"><strong>檢視範圍</strong><small>篩選說話者與分頁</small></div><div class="action-buttons"><label>顯示發話者<select id="speakerFilter"><option value="__ALL__">全部</option></select></label><label>每頁<select id="pageSize"><option value="50">50</option><option value="100" selected>100</option><option value="200">200</option><option value="0">全部</option></select></label><button type="button" id="pagePrev" class="action-nav">上一頁</button><span id="pageInfo">第 1 / 1 頁</span><button type="button" id="pageNext" class="action-nav">下一頁</button></div></div>
+<div class="action-group action-group-check"><span class="action-step">2</span><div class="action-copy"><strong>驗證資料</strong><small>匯出前檢查欄位與訊息</small></div><div class="action-buttons"><button type="button" id="validateBtn" class="action-check">前端驗證</button></div></div>
+<div class="action-group action-group-export"><span class="action-step">3</span><div class="action-copy"><strong>完整匯出</strong><small>輸出目前資料集</small></div><div class="action-buttons"><button type="button" id="downloadJson" class="action-export">下載 JSON</button><button type="button" id="downloadXlsx" class="action-export">下載 XLSX</button><button type="button" id="downloadTsv" class="action-export">下載 UTF-16LE TSV</button></div></div>
+<div class="action-group action-group-export"><span class="action-step">4</span><div class="action-copy"><strong>分批匯出</strong><small>大量資料分批下載</small></div><div class="action-buttons"><label>分批列數<input id="partSize" type="number" value="1000" min="100" step="100"></label><button type="button" id="downloadJsonParts" class="action-export">分批 JSON</button><button type="button" id="downloadXlsxParts" class="action-export">分批 XLSX</button><button type="button" id="downloadTsvParts" class="action-export">分批 TSV</button></div></div>
+</div>
+<div class="table-wrap"><table><thead><tr><th><span class="schema-head"><span class="schema-title">操作</span><span class="schema-code">row_action</span></span></th><th><span class="schema-head"><span class="schema-title">列號</span><span class="schema-code">source_row_no</span></span></th><th><span class="schema-head"><span class="schema-title">發話者類型</span><span class="schema-code">speaker_type</span></span></th><th><span class="schema-head"><span class="schema-title">說話者代碼</span><span class="schema-code">speaker_code</span></span></th><th><span class="schema-head"><span class="schema-title">原始標籤</span><span class="schema-code">speaker_label_raw</span></span></th><th><span class="schema-head"><span class="schema-title">語句功能</span><span class="schema-code">utterance_function</span></span></th><th><span class="schema-head"><span class="schema-title">開始時間</span><span class="schema-code">start_timecode</span></span></th><th><span class="schema-head"><span class="schema-title">原始文字</span><span class="schema-code">utterance_text_raw</span></span></th><th><span class="schema-head"><span class="schema-title">清理預覽</span><span class="schema-code">utterance_text_clean</span></span></th><th><span class="schema-head"><span class="schema-title">場景代碼</span><span class="schema-code">scene_code</span></span></th><th><span class="schema-head"><span class="schema-title">前端錯誤</span><span class="schema-code">frontend_error</span></span></th><th><span class="schema-head"><span class="schema-title">前端警示</span><span class="schema-code">frontend_warning</span></span></th></tr></thead><tbody id="rows"></tbody></table></div>
 </section>
 </div>
 </div>
 </main>
-<script src="assets/dago-corpus-v1-4-core.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-workspace-v1-4.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-workspace-ops-v1-4.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-parser-v1-4.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-docx-v1-4.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-open-review-v1-4.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-input-ops-v1-4.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-xlsx-core-v1-4.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-mapping-io-v1-4.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-export-v1-4.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-xlsx-parts-v1-4.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-large-import-v1-4.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-stress-test-v1-4.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-mapping-validation-v1-4.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-help-v1-4.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-v1-4-selftest.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-v1-4-50k-mapping-fix.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-v1-4-turbo-chunk-v3-core.js?v=20260517-rowops-v3"></script>
-<script src="assets/dago-corpus-v1-4-rowops-v3.js?v=20260517-rowops-v3"></script>
+<script src="assets/dago-corpus-v1-4-core.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-workspace-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-workspace-ops-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-parser-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-docx-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-open-review-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-input-ops-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-xlsx-core-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-mapping-io-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-export-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-xlsx-parts-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-large-import-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-stress-test-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-mapping-validation-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-help-v1-4.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-v1-4-selftest.js?v=20260517-row50k-mapping-authority-v2"></script>
+<script src="assets/dago-corpus-v1-4-50k-mapping-fix.js?v=20260517-row50k-mapping-authority-v2"></script>
 </body>
 </html>
