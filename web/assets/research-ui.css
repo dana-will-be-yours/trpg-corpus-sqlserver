@@ -798,9 +798,9 @@ html {
 }
 
 .portal-page .site-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  position: relative;
+  top: auto;
+  z-index: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -810,8 +810,8 @@ html {
   margin: 0 auto;
   padding: 0.85rem 0;
   border-bottom: 1px solid rgb(215 224 218 / 0.72);
-  background: rgb(245 247 244 / 0.9);
-  backdrop-filter: blur(14px);
+  background: transparent;
+  backdrop-filter: none;
 }
 
 .portal-page .brand {
@@ -1441,6 +1441,25 @@ html {
   min-height: 1.1rem;
   margin-top: 0.18rem;
   accent-color: var(--accent);
+}
+
+.checklist-next {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--line);
+}
+
+.checklist-next[hidden] {
+  display: none;
+}
+
+.checklist-next p {
+  margin: 0;
+  color: var(--muted);
 }
 
 
@@ -2893,6 +2912,10 @@ html {
     justify-content: flex-start;
   }
 
+  .checklist-next {
+    grid-column: 1;
+  }
+
   .hero-copy {
     min-height: auto;
     padding: 1.2rem;
@@ -3010,6 +3033,15 @@ html {
   .metric-strip article:last-child,
   .results-principles article:last-child {
     border-bottom: 0;
+  }
+
+  .checklist-next {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .checklist-next .button {
+    width: 100%;
   }
 
   .viz-empty {

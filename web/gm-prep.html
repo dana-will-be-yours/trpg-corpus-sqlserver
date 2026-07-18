@@ -127,15 +127,35 @@
         <p class="kicker">檢核清單</p>
         <h2>每期開始前確認</h2>
       </div>
-      <form class="prep-checklist">
-        <label><input type="checkbox"> 已核對團隊為 1 名 GM 與 4 名 PL。</label>
-        <label><input type="checkbox"> 已核對當期題本、版本、序列、期別與條件。</label>
-        <label><input type="checkbox"> 已完成 COC7TH 研究規則與內容界線說明。</label>
-        <label><input type="checkbox"> 已確認 120 至 150 分鐘計時與結束通知。</label>
-        <label><input type="checkbox"> 已確認錄音、場次代碼、暫停、退出及異常紀錄。</label>
-        <label><input type="checkbox"> 已確認 A／B 當期材料，未提供另一條件資料。</label>
+      <form id="gm-prep-checklist" class="prep-checklist">
+        <label><input type="checkbox" name="gm-prep-item"> 已核對團隊為 1 名 GM 與 4 名 PL。</label>
+        <label><input type="checkbox" name="gm-prep-item"> 已核對當期題本、版本、序列、期別與條件。</label>
+        <label><input type="checkbox" name="gm-prep-item"> 已完成 COC7TH 研究規則與內容界線說明。</label>
+        <label><input type="checkbox" name="gm-prep-item"> 已確認 120 至 150 分鐘計時與結束通知。</label>
+        <label><input type="checkbox" name="gm-prep-item"> 已確認錄音、場次代碼、暫停、退出及異常紀錄。</label>
+        <label><input type="checkbox" name="gm-prep-item"> 已確認 A／B 當期材料，未提供另一條件資料。</label>
       </form>
+      <div id="gm-checklist-next" class="checklist-next" aria-live="polite" hidden>
+        <p>六項確認完成，請進入下一頁。</p>
+        <a class="button primary" href="transcript-review.html">下一頁：逐字稿審閱</a>
+      </div>
     </section>
 </main>
+  <script>
+    (() => {
+      const checklist = document.getElementById("gm-prep-checklist");
+      const nextStep = document.getElementById("gm-checklist-next");
+      const items = [...checklist.querySelectorAll('input[type="checkbox"]')];
+
+      const updateNextStep = () => {
+        const complete = items.length > 0 && items.every((item) => item.checked);
+        checklist.dataset.complete = String(complete);
+        nextStep.hidden = !complete;
+      };
+
+      checklist.addEventListener("change", updateNextStep);
+      updateNextStep();
+    })();
+  </script>
 </body>
 </html>
